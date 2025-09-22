@@ -165,6 +165,62 @@
                 transform: translateX(0);
             }
         }
+        
+        /* Styles pour l'archivage */
+        .archived-border {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .archived-overlay {
+            opacity: 0.7;
+        }
+        
+        .grayscale {
+            filter: grayscale(100%);
+        }
+        
+        .view-switcher-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc2626;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #16a34a;
+        }
+        
+        .badge-warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            color: #d97706;
+        }
+        
+        .badge-error {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc2626;
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .input-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -193,6 +249,9 @@
                     <p class="text-gray-600 mt-1">Panel d'administration - Responsable Pédagogique</p>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <button class="btn btn-ghost glass-card" id="refresh-btn">
+                        <i class="ri-refresh-line mr-2"></i> Actualiser
+                    </button>
                     <div class="relative">
                         <button class="btn btn-ghost btn-circle glass-card w-12 h-12">
                             <i class="ri-notification-3-line text-xl"></i>
@@ -253,12 +312,17 @@
                 </div>
             </div>
 
+            <!-- View Switcher -->
+            <div id="view-switcher-container" class="view-switcher-container">
+                <!-- Le sélecteur de vue sera généré dynamiquement ici -->
+            </div>
+
             <!-- Header Section -->
             <div class="glass-card rounded-2xl p-6 mb-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Liste des Professeurs</h2>
-                        <p class="text-gray-600 mt-1">Gérez l'ensemble du corps professoral</p>
+                        <h2 class="text-2xl font-bold text-gray-900" id="page-title">Liste des Professeurs Actifs</h2>
+                        <p class="text-gray-600 mt-1" id="page-subtitle">Gérez l'ensemble du corps professoral</p>
                     </div>
                     <div class="flex space-x-3">
                         <div class="relative">

@@ -234,10 +234,15 @@
   </div>
   
   <div id="notifications" class="fixed top-4 right-4 space-y-2"></div>
-
   <script type="module" src="../../../public/assets/javascript/rp/dashboard.js"></script>
+  <script type="module" src="../../components/sidebar/sidebar.js"></script>
 
   <script>
+    // initialiser le sidebar pour le dashboard des RP
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = new SidebarComponent('sidebar-container', 'dashboard');
+      sidebar.render();
+    });
     // Script pour les graphiques des professeurs
     document.addEventListener('DOMContentLoaded', function() {
       // Chart.js initialization for professor data

@@ -88,16 +88,16 @@
       "id_niveau": "3",
       "id_annee": "1",
       "capacite_max": "10",
-      "state": "archivé"
+      "state": "disponible"
     },
     {
-      "id": "7",
       "libelle": "L3 Dev",
       "id_filiere": "1",
       "id_niveau": "3",
       "id_annee": "1",
-      "capacite_max": "26",
-      "state": "disponible"
+      "capacite_max": 25,
+      "state": "disponible",
+      "id": "7"
     },
     {
       "id": "8",
@@ -566,12 +566,14 @@
       "specialite": "Informatique",
       "grade": "principal",
       "date_embauche": "2020-09-01",
-      "id": "1"
+      "id": "1",
+      "archived": false,
+      "date_archivage": null
     },
     {
       "id_utilisateur": "3",
-      "specialite": "Mathématiques",
-      "grade": "Maître Assistant",
+      "specialite": "Physique",
+      "grade": "Professeur",
       "date_embauche": "2021-10-15",
       "id": "2"
     },

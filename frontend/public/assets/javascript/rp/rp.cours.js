@@ -1,107 +1,12 @@
+import {SidebarComponent} from "../../../../src/components/sidebar/sidebar.js";
 
 // Classe SidebarComponent
-class SidebarComponent {
-  constructor(containerId, activeLink = "cours") {
-    this.containerId = containerId;
-    this.activeLink = activeLink;
-    this.links = [
-      { id: "dashboard", icon: "ri-dashboard-line", text: "Dashboard" },
-      { id: "classes", icon: "ri-group-line", text: "Classes" },
-      { id: "professeurs", icon: "ri-user-star-line", text: "Professeurs" },
-      { id: "cours", icon: "ri-book-open-line", text: "Cours" },
-    ];
-  }
-
-  render() {
-    const container = document.getElementById(this.containerId);
-    if (!container) return;
-
-    container.innerHTML = `
-                  <aside class="fixed top-0 left-0 h-full w-56 bg-white shadow-md z-50">
-                    <div class="sidebar-logo p-4 border-b">
-                      <h1 class="text-xl font-bold text-white">Ecole 221</h1>
-                    </div>
-                    <nav class="mt-4">
-                      <ul>
-                        ${this.links
-                          .map(
-                            (link) => `
-                          <li>
-                            <a href="#" 
-                               class="sidebar-link px-4 py-3 flex items-center text-gray-700"
-                               id="link-${link.id}"
-                               data-link="${link.id}">
-                              <i class="${link.icon} mr-3"></i>
-                              <span>${link.text}</span>
-                            </a>
-                          </li>
-                        `
-                          )
-                          .join("")}
-                      </ul>
-                    </nav>
-                  </aside>
-                `;
-
-    this.addEventListeners();
-    this.setActiveLink(this.activeLink);
-  }
-
-  addEventListeners() {
-    this.links.forEach((link) => {
-      const element = document.getElementById(`link-${link.id}`);
-      if (element) {
-        element.addEventListener("click", (e) => {
-          e.preventDefault();
-          this.setActiveLink(link.id);
-          this.handleNavigation(link.id);
-        });
-      }
-    });
-  }
-
-  setActiveLink(linkId) {
-    this.activeLink = linkId;
-
-    this.links.forEach((link) => {
-      const element = document.getElementById(`link-${link.id}`);
-      if (element) {
-        element.classList.remove(
-          "active-link",
-          "text-indigo-700",
-          "bg-indigo-50"
-        );
-      }
-    });
-
-    const activeElement = document.getElementById(`link-${linkId}`);
-    if (activeElement) {
-      activeElement.classList.add(
-        "active-link",
-        "text-indigo-700",
-        "bg-indigo-50"
-      );
-    }
-  }
-
-  handleNavigation(linkId) {
-      if (linkId === 'cours') return;
-                if (linkId === 'classes') {
-                    window.location.href = 'classes.html';
-                }else if (linkId === 'dashboard') {
-                        window.location.href = 'dashboard.html';
-                } else if (linkId === 'professeurs') {
-                    window.location.href = 'professeurs.html';
-                } else {
-                    alert(`Navigation vers ${linkId}.html`);
-                }
-              }
-}
 
 // Gestion des cours
 class CourseManager {
   constructor() {
     this.courses = [];
+    this.archivedCourses = []; // Nouveau tableau pour les cours archivés
     this.initCalendar();
     this.init();
   }
@@ -141,6 +46,8 @@ class CourseManager {
           room: "Salle A101",
           type: "cours",
           color: 1,
+          archived: false,
+          archivedAt: null
         },
       },
       {
@@ -155,6 +62,8 @@ class CourseManager {
           room: "Labo Informatique 1",
           type: "tp",
           color: 2,
+          archived: false,
+          archivedAt: null
         },
       },
       {
@@ -169,6 +78,8 @@ class CourseManager {
           room: "Salle B203",
           type: "cours",
           color: 3,
+          archived: false,
+          archivedAt: null
         },
       },
       {
@@ -183,6 +94,8 @@ class CourseManager {
           room: "Amphi Principal",
           type: "cours",
           color: 4,
+          archived: false,
+          archivedAt: null
         },
       },
       {
@@ -197,8 +110,30 @@ class CourseManager {
           room: "Salle A102",
           type: "td",
           color: 1,
+          archived: false,
+          archivedAt: null
         },
       },
+    ];
+
+    // Données de démonstration pour les cours archivés
+    this.archivedCourses = [
+      {
+        id: 6,
+        title: "Anglais technique - L1 Info",
+        start: new Date(startOfWeek.setDate(startOfWeek.getDate() - 7)),
+        end: new Date(startOfWeek.setHours(15, 0, 0)),
+        extendedProps: {
+          module: "Anglais technique",
+          professor: "Dr. Sarah Johnson",
+          class: "L1 Informatique",
+          room: "Salle C101",
+          type: "cours",
+          color: 5,
+          archived: true,
+          archivedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        },
+      }
     ];
   }
 
@@ -233,13 +168,13 @@ class CourseManager {
 
         return {
           html: `
-                                <div class="p-2">
-                                    <div class="font-bold truncate">${props.module}</div>
-                                    <div class="text-xs">${props.class}</div>
-                                    <div class="text-xs">${props.professor}</div>
-                                    <div class="text-xs">${props.room}</div>
-                                </div>
-                            `,
+            <div class="p-2">
+              <div class="font-bold truncate">${props.module}</div>
+              <div class="text-xs">${props.class}</div>
+              <div class="text-xs">${props.professor}</div>
+              <div class="text-xs">${props.room}</div>
+            </div>
+          `,
         };
       },
       eventClassNames: (arg) => {
@@ -264,6 +199,122 @@ class CourseManager {
 
   renderCalendar() {
     this.calendar.render();
+  }
+
+  // Méthode pour archiver un cours
+  archiveCourse(courseId) {
+    const courseIndex = this.courses.findIndex(course => course.id == courseId);
+    
+    if (courseIndex !== -1) {
+      const course = this.courses[courseIndex];
+      
+      // Marquer le cours comme archivé
+      course.extendedProps.archived = true;
+      course.extendedProps.archivedAt = new Date();
+      
+      // Déplacer vers les archives
+      this.archivedCourses.push(course);
+      this.courses.splice(courseIndex, 1);
+      
+      // Mettre à jour le calendrier
+      this.updateCalendar();
+      
+      this.showNotification('Cours archivé avec succès', 'success');
+      return true;
+    }
+    return false;
+  }
+
+  // Méthode pour restaurer un cours
+  restoreCourse(courseId) {
+    const courseIndex = this.archivedCourses.findIndex(course => course.id == courseId);
+    
+    if (courseIndex !== -1) {
+      const course = this.archivedCourses[courseIndex];
+      
+      // Retirer l'archivage
+      course.extendedProps.archived = false;
+      course.extendedProps.archivedAt = null;
+      
+      // Remettre dans les cours actifs
+      this.courses.push(course);
+      this.archivedCourses.splice(courseIndex, 1);
+      
+      // Mettre à jour le calendrier
+      this.updateCalendar();
+      
+      this.showNotification('Cours restauré avec succès', 'success');
+      return true;
+    }
+    return false;
+  }
+
+  // Méthode pour mettre à jour le calendrier
+  updateCalendar() {
+    this.calendar.removeAllEvents();
+    this.calendar.addEventSource(this.courses);
+  }
+
+  // Méthode pour afficher les cours archivés
+  showArchivedCourses() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg p-6 w-full max-w-4xl max-h-96 overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Cours archivés</h3>
+          <button id="close-archived-modal" class="text-gray-500 hover:text-gray-700">
+            <i class="ri-close-line text-2xl"></i>
+          </button>
+        </div>
+        <div id="archived-courses-list" class="space-y-2">
+          ${this.archivedCourses.length === 0 ? 
+            '<p class="text-gray-500 text-center py-4">Aucun cours archivé</p>' : 
+            this.archivedCourses.map(course => `
+              <div class="flex justify-between items-center p-3 border rounded-lg">
+                <div>
+                  <div class="font-semibold">${course.extendedProps.module}</div>
+                  <div class="text-sm text-gray-600">
+                    ${course.extendedProps.class} - ${course.extendedProps.professor}
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    ${new Date(course.start).toLocaleDateString('fr-FR')} • ${course.extendedProps.room}
+                  </div>
+                  <div class="text-xs text-gray-400">
+                    Archivé le: ${new Date(course.extendedProps.archivedAt).toLocaleDateString('fr-FR')}
+                  </div>
+                </div>
+                <button class="restore-course-btn btn btn-outline btn-sm" data-id="${course.id}">
+                  <i class="ri-refresh-line mr-1"></i> Restaurer
+                </button>
+              </div>
+            `).join('')}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Gestion de la fermeture
+    document.getElementById('close-archived-modal').addEventListener('click', () => {
+      modal.remove();
+    });
+
+    // Gestion de la restauration
+    modal.querySelectorAll('.restore-course-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const courseId = e.target.closest('button').dataset.id;
+        this.restoreCourse(courseId);
+        modal.remove();
+      });
+    });
+
+    // Fermer en cliquant à l'extérieur
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
   }
 
   validateForm() {
@@ -368,11 +419,13 @@ class CourseManager {
   showSubmitLoading(show) {
     const submitText = document.getElementById("submit-text");
     const submitSpinner = document.getElementById("submit-spinner");
+    const submitBtn = document.getElementById("submit-btn");
 
-    if (submitText && submitSpinner) {
+    // Vérifier que les éléments existent avant de les manipuler
+    if (submitText && submitSpinner && submitBtn) {
       submitText.style.display = show ? "none" : "inline";
       submitSpinner.style.display = show ? "inline-block" : "none";
-      document.getElementById("submit-btn").disabled = show;
+      submitBtn.disabled = show;
     }
   }
 
@@ -381,16 +434,23 @@ class CourseManager {
     const notification = document.createElement("div");
     notification.className = `alert alert-${type} notification mb-4`;
     notification.innerHTML = `
-                    <div class="flex items-center">
-                        <i class="ri-${
-                          type === "success" ? "check" : "close"
-                        }-circle-fill mr-2"></i>
-                        <span>${message}</span>
-                    </div>
-                `;
+      <div class="flex items-center">
+        <i class="ri-${type === "success" ? "check" : "close"}-circle-fill mr-2"></i>
+        <span>${message}</span>
+      </div>
+    `;
 
     const container = document.getElementById("notification-container");
-    container.appendChild(notification);
+    if (container) {
+      container.appendChild(notification);
+    } else {
+      // Créer le conteneur s'il n'existe pas
+      const newContainer = document.createElement("div");
+      newContainer.id = "notification-container";
+      newContainer.className = "fixed top-4 right-4 z-50";
+      document.body.appendChild(newContainer);
+      newContainer.appendChild(notification);
+    }
 
     // Supprimer la notification après 3 secondes
     setTimeout(() => {
@@ -418,12 +478,8 @@ class CourseManager {
     document.getElementById("course-class").value = props.class;
     document.getElementById("course-professor").value = props.professor;
     document.getElementById("course-room").value = props.room;
-    document.getElementById("course-start").value = this.formatDateTime(
-      event.start
-    );
-    document.getElementById("course-end").value = this.formatDateTime(
-      event.end
-    );
+    document.getElementById("course-start").value = this.formatDateTime(event.start);
+    document.getElementById("course-end").value = this.formatDateTime(event.end);
     document.getElementById("course-type").value = props.type;
 
     // Sélectionner la couleur
@@ -434,32 +490,136 @@ class CourseManager {
       }
     });
 
+    // Ajouter le bouton d'archivage
+    this.addArchiveButtonToModal(event.id);
+
     this.clearErrors();
     document.getElementById("course-modal").showModal();
   }
 
+  // Méthode pour ajouter le bouton d'archivage dans le modal
+  addArchiveButtonToModal(courseId) {
+    // Supprimer l'ancien bouton s'il existe
+    const existingBtn = document.getElementById('archive-course-btn');
+    if (existingBtn) {
+      existingBtn.remove();
+    }
+
+    // Créer le bouton d'archivage
+    const archiveBtn = document.createElement('button');
+    archiveBtn.id = 'archive-course-btn';
+    archiveBtn.type = 'button'; // Important : type="button" pour éviter la soumission
+    archiveBtn.className = 'btn btn-outline btn-error mt-4 w-full';
+    archiveBtn.innerHTML = '<i class="ri-archive-line mr-2"></i>Archiver ce cours';
+    archiveBtn.dataset.courseId = courseId;
+
+    archiveBtn.addEventListener('click', (e) => {
+      e.preventDefault(); // Empêcher la soumission du formulaire
+      e.stopPropagation(); // Arrêter la propagation
+      this.showArchiveConfirmation(courseId);
+    });
+
+    // Ajouter le bouton avant les boutons d'action
+    const modalActions = document.querySelector('#course-modal .modal-action');
+    const form = document.getElementById('course-form');
+    if (modalActions && form) {
+      form.insertBefore(archiveBtn, modalActions);
+    } else if (form) {
+      form.appendChild(archiveBtn);
+    }
+  }
+
+  // Méthode pour afficher la confirmation d'archivage
+  showArchiveConfirmation(courseId) {
+    const course = this.courses.find(c => c.id == courseId);
+    if (!course) {
+      this.showNotification('Cours non trouvé', 'error');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg p-6 max-w-md mx-4">
+        <div class="text-yellow-500 text-4xl mb-4 text-center">
+          <i class="ri-alert-line"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 text-center">Confirmer l'archivage</h3>
+        <p class="text-gray-600 mb-4 text-center">
+          Êtes-vous sûr de vouloir archiver le cours "<strong>${course.extendedProps.module}</strong>" ?
+        </p>
+        <p class="text-sm text-gray-500 mb-4 text-center">
+          Le cours sera déplacé vers les archives et n'apparaîtra plus dans le planning.
+        </p>
+        <div class="flex gap-3 justify-center">
+          <button id="confirm-archive" class="btn btn-error px-4">
+            <i class="ri-archive-line mr-2"></i>Archiver
+          </button>
+          <button id="cancel-archive" class="btn btn-outline px-4">Annuler</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Gestion de la confirmation
+    const confirmHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (this.archiveCourse(courseId)) {
+        document.getElementById('course-modal').close();
+      }
+      modal.remove();
+    };
+
+    // Gestion de l'annulation
+    const cancelHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      modal.remove();
+    };
+
+    document.getElementById('confirm-archive').addEventListener('click', confirmHandler);
+    document.getElementById('cancel-archive').addEventListener('click', cancelHandler);
+
+    // Fermer en cliquant à l'extérieur
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
   setupEventListeners() {
     // Bouton pour ajouter un cours
-    document.getElementById("add-course-btn").addEventListener("click", () => {
-      document.getElementById("modal-title").textContent =
-        "Planifier un nouveau cours";
+    document.getElementById("add-course-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      
+      document.getElementById("modal-title").textContent = "Planifier un nouveau cours";
       document.getElementById("course-form").reset();
       document.getElementById("course-id").value = "";
 
+      // Supprimer le bouton d'archivage s'il existe
+      const archiveBtn = document.getElementById('archive-course-btn');
+      if (archiveBtn) {
+        archiveBtn.remove();
+      }
+
       // Sélectionner la couleur par défaut
       const colorRadios = document.getElementsByName("course-color");
-      colorRadios[0].checked = true;
+      if (colorRadios.length > 0) {
+        colorRadios[0].checked = true;
+      }
 
       this.clearErrors();
       document.getElementById("course-modal").showModal();
     });
 
     // Bouton pour annuler le modal
-    document
-      .getElementById("cancel-course-modal")
-      .addEventListener("click", () => {
-        document.getElementById("course-modal").close();
-      });
+    document.getElementById("cancel-course-modal").addEventListener("click", () => {
+      document.getElementById("course-modal").close();
+    });
 
     // Bouton d'actualisation
     document.getElementById("refresh-btn").addEventListener("click", () => {
@@ -471,11 +631,9 @@ class CourseManager {
     });
 
     // Bouton semaine actuelle
-    document
-      .getElementById("current-week-btn")
-      .addEventListener("click", () => {
-        this.calendar.today();
-      });
+    document.getElementById("current-week-btn").addEventListener("click", () => {
+      this.calendar.today();
+    });
 
     // Soumission du formulaire
     document.getElementById("course-form").addEventListener("submit", (e) => {
@@ -491,11 +649,8 @@ class CourseManager {
 
       // Récupérer les données du formulaire
       const courseData = {
-        id:
-          document.getElementById("course-id").value || this.courses.length + 1,
-        title: `${document.getElementById("course-module").value} - ${
-          document.getElementById("course-class").value
-        }`,
+        id: document.getElementById("course-id").value || Date.now(),
+        title: `${document.getElementById("course-module").value} - ${document.getElementById("course-class").value}`,
         start: new Date(document.getElementById("course-start").value),
         end: new Date(document.getElementById("course-end").value),
         extendedProps: {
@@ -504,8 +659,9 @@ class CourseManager {
           class: document.getElementById("course-class").value,
           room: document.getElementById("course-room").value,
           type: document.getElementById("course-type").value,
-          color: document.querySelector('input[name="course-color"]:checked')
-            .value,
+          color: document.querySelector('input[name="course-color"]:checked').value,
+          archived: false,
+          archivedAt: null
         },
       };
 
@@ -531,9 +687,7 @@ class CourseManager {
 
         // Afficher une notification de succès
         this.showNotification(
-          `Cours ${
-            document.getElementById("course-id").value ? "modifié" : "planifié"
-          } avec succès`
+          `Cours ${document.getElementById("course-id").value ? "modifié" : "planifié"} avec succès`
         );
 
         // Réinitialiser le chargement
@@ -546,11 +700,9 @@ class CourseManager {
       this.applyFilters();
     });
 
-    document
-      .getElementById("professor-filter")
-      .addEventListener("change", () => {
-        this.applyFilters();
-      });
+    document.getElementById("professor-filter").addEventListener("change", () => {
+      this.applyFilters();
+    });
 
     document.getElementById("room-filter").addEventListener("change", () => {
       this.applyFilters();
@@ -559,6 +711,35 @@ class CourseManager {
     document.getElementById("module-filter").addEventListener("change", () => {
       this.applyFilters();
     });
+
+    // Ajouter le bouton des cours archivés
+    this.addArchivedCoursesButton();
+  }
+
+  // Méthode pour ajouter le bouton des cours archivés
+  addArchivedCoursesButton() {
+    // Créer le bouton s'il n'existe pas
+    if (!document.getElementById('archived-courses-btn')) {
+      const archivedBtn = document.createElement('button');
+      archivedBtn.id = 'archived-courses-btn';
+      archivedBtn.className = 'btn btn-outline mr-2';
+      archivedBtn.innerHTML = '<i class="ri-archive-line mr-2"></i>Cours archivés';
+      
+      // Trouver le conteneur des boutons
+      const buttonContainer = document.querySelector('.flex.justify-between.items-center.mb-6');
+      if (buttonContainer) {
+        const addCourseBtn = document.getElementById('add-course-btn');
+        if (addCourseBtn) {
+          buttonContainer.insertBefore(archivedBtn, addCourseBtn);
+        } else {
+          buttonContainer.appendChild(archivedBtn);
+        }
+      }
+
+      archivedBtn.addEventListener('click', () => {
+        this.showArchivedCourses();
+      });
+    }
   }
 
   applyFilters() {
@@ -604,21 +785,20 @@ class LogoutManager {
     // Créer dynamiquement la fenêtre de confirmation
     const overlay = document.createElement("div");
     overlay.id = "logout-overlay";
-    overlay.className =
-      "fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex justify-center items-center z-50";
+    overlay.className = "fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex justify-center items-center z-50";
     overlay.innerHTML = `
-                    <div class="bg-white rounded-xl p-8 max-w-md text-center">
-                        <div class="text-6xl text-red-500 mb-4">
-                            <i class="ri-logout-circle-r-line"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold mb-4">Confirmer la déconnexion</h2>
-                        <p class="mb-6 text-gray-600">Êtes-vous sûr de vouloir vous déconnecter ?</p>
-                        <div class="flex justify-center gap-4">
-                            <button id="confirm-logout" class="btn btn-primary px-6">Oui, déconnecter</button>
-                            <button id="cancel-logout" class="btn btn-outline px-6">Annuler</button>
-                        </div>
-                    </div>
-                `;
+      <div class="bg-white rounded-xl p-8 max-w-md text-center">
+        <div class="text-6xl text-red-500 mb-4">
+          <i class="ri-logout-circle-r-line"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-4">Confirmer la déconnexion</h2>
+        <p class="mb-6 text-gray-600">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+        <div class="flex justify-center gap-4">
+          <button id="confirm-logout" class="btn btn-primary px-6">Oui, déconnecter</button>
+          <button id="cancel-logout" class="btn btn-outline px-6">Annuler</button>
+        </div>
+      </div>
+    `;
 
     document.body.appendChild(overlay);
 
@@ -630,14 +810,20 @@ class LogoutManager {
     document.getElementById("cancel-logout").addEventListener("click", () => {
       overlay.remove();
     });
+
+    // Fermer en cliquant à l'extérieur
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
   }
 
   performLogout() {
     const confirmBtn = document.getElementById("confirm-logout");
     if (confirmBtn) {
       // Afficher un indicateur de chargement
-      confirmBtn.innerHTML =
-        '<div class="loading-spinner mr-2"></div> Déconnexion...';
+      confirmBtn.innerHTML = '<div class="loading-spinner mr-2"></div> Déconnexion...';
       confirmBtn.disabled = true;
 
       // Simuler le processus de déconnexion
@@ -655,9 +841,14 @@ class LogoutManager {
 
 // Initialisation de la page
 document.addEventListener("DOMContentLoaded", () => {
-  const sidebar = new SidebarComponent("sidebar-container", "cours");
-  sidebar.render();
+    // Détection automatique de la page active
+    const currentPage = window.location.pathname.includes('cours') ? 'cours' : 
+                       window.location.pathname.includes('classes') ? 'classes' : 
+                       window.location.pathname.includes('professeurs') ? 'professeurs' : 'dashboard';
+    
+    const sidebar = new SidebarComponent("sidebar-container", currentPage);
+    sidebar.render();
 
-  const courseManager = new CourseManager();
-  const logoutManager = new LogoutManager();
+    const courseManager = new CourseManager();
+    const logoutManager = new LogoutManager();
 });

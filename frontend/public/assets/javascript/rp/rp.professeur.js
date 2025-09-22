@@ -1,137 +1,27 @@
-import { router } from "../../../../src/router/router.js";
-
-// Classe Sidebar
-class SidebarComponent {
-    constructor(containerId, activeLink = 'professeurs') {
-        this.containerId = containerId;
-        this.activeLink = activeLink;
-        this.links = [
-            { id: 'dashboard', icon: 'ri-dashboard-line', text: 'Dashboard' },
-            { id: 'classes', icon: 'ri-group-line', text: 'Classes' },
-            { id: 'professeurs', icon: 'ri-user-star-line', text: 'Professeurs' },
-            { id: 'cours', icon: 'ri-book-open-line', text: 'Cours' },
-        ];
-    }
-    
-    render() {
-        const container = document.getElementById(this.containerId);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <aside class="fixed top-0 left-0 h-full w-72 bg-white shadow-xl z-50 sidebar">
-                <div class="sidebar-logo p-6 border-b border-white border-opacity-20">
-                    <h1 class="text-2xl font-bold text-white">Ecole 221</h1>
-                    <p class="text-white text-opacity-70 text-sm mt-1">Plateforme de gestion</p>
-                </div>
-                <nav class="mt-6 p-4">
-                    <ul class="space-y-2">
-                        ${this.links.map(link => `
-                            <li>
-                                <a href="#" 
-                                    class="sidebar-link px-4 py-4 flex items-center text-white text-opacity-80 rounded-xl transition-all duration-200 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10"
-                                    id="link-${link.id}"
-                                    data-link="${link.id}">
-                                    <i class="${link.icon} text-xl mr-4"></i>
-                                    <span class="font-medium">${link.text}</span>
-                                </a>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </nav>
-            </aside>
-        `;
-        
-        this.addEventListeners();
-        this.setActiveLink(this.activeLink);
-    }
-    
-    addEventListeners() {
-        this.links.forEach(link => {
-            const element = document.getElementById(`link-${link.id}`);
-            if (element) {
-                element.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.setActiveLink(link.id);
-                    this.handleNavigation(link.id);
-                });
-            }
-        });
-    }
-    
-    setActiveLink(linkId) {
-        this.activeLink = linkId;
-        
-        this.links.forEach(link => {
-            const element = document.getElementById(`link-${link.id}`);
-            if (element) {
-                element.classList.remove('active-link');
-            }
-        });
-        
-        const activeElement = document.getElementById(`link-${linkId}`);
-        if (activeElement) {
-            activeElement.classList.add('active-link');
-        }
-    }
-    
-    handleNavigation(linkId) {
-        if (linkId === 'professeurs') return;
-        if (linkId === 'classes') {
-            window.location.href = 'classes.html';
-        } else if (linkId === 'dashboard') {
-            window.location.href = 'dashboard.html';
-        } else if (linkId === 'cours') {
-            window.location.href = 'cours.html';
-        } else {
-            this.showToast(`Navigation vers ${linkId}.html`, 'info');
-        }
-    }
-
-    showToast(message, type = 'info') {
-        this.showNotification(message, type);
-    }
-
-    showNotification(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast slide-in`;
-        toast.innerHTML = `
-            <div class="alert alert-${type} shadow-lg glass-card">
-                <div class="flex items-center">
-                    <i class="ri-${type === 'success' ? 'check' : type === 'error' ? 'close' : 'information'}-circle-fill mr-3 text-lg"></i>
-                    <span class="font-medium">${message}</span>
-                </div>
-            </div>
-        `;
-        
-        const container = document.getElementById('notification-container');
-        if (container) {
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-    }
-}
-
+import {SidebarComponent} from "../../../../src/components/sidebar/sidebar.js";
 // Gestion des professeurs avec API réelle
 class ProfessorManager {
     constructor() {
         this.API_BASE = 'http://localhost:3000';
         this.professors = [];
+        this.archivedProfessors = [];
         this.utilisateurs = [];
         this.classes = [];
-        this.init();
+        this.currentView = 'active'; // 'active' ou 'archived'
+            this.init();
+        
     }
     
     async init() {
         try {
             await Promise.all([
                 this.loadProfessors(),
+                this.loadArchivedProfessors(),
                 this.loadUtilisateurs(),
                 this.loadClasses()
             ]);
             
+            this.renderViewSwitcher();
             this.renderProfessors();
             this.setupEventListeners();
             
@@ -147,14 +37,26 @@ class ProfessorManager {
         }
     }
     
-    // Charger les professeurs depuis l'API
+    // Charger les professeurs actifs depuis l'API
     async loadProfessors() {
         try {
-            const response = await fetch(`${this.API_BASE}/professeurs`);
+            const response = await fetch(`${this.API_BASE}/professeurs?archived=false`);
             if (!response.ok) throw new Error('Erreur réseau');
             this.professors = await response.json();
         } catch (error) {
             console.error('Erreur de chargement des professeurs:', error);
+            throw error;
+        }
+    }
+    
+    // Charger les professeurs archivés depuis l'API
+    async loadArchivedProfessors() {
+        try {
+            const response = await fetch(`${this.API_BASE}/professeurs?archived=true`);
+            if (!response.ok) throw new Error('Erreur réseau');
+            this.archivedProfessors = await response.json();
+        } catch (error) {
+            console.error('Erreur de chargement des professeurs archivés:', error);
             throw error;
         }
     }
@@ -188,21 +90,58 @@ class ProfessorManager {
         return this.utilisateurs.find(user => user.id == professor.id_utilisateur);
     }
     
+    // Afficher le sélecteur de vue (actif/archivé)
+    renderViewSwitcher() {
+        const container = document.getElementById('view-switcher-container');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="flex space-x-2 mb-6">
+                <button class="btn ${this.currentView === 'active' ? 'btn-primary-modern' : 'btn-outline'} btn-modern rounded-xl view-switcher" data-view="active">
+                    <i class="ri-user-line mr-2"></i> Professeurs actifs
+                    <span class="badge badge-sm ml-2">${this.professors.length}</span>
+                </button>
+                <button class="btn ${this.currentView === 'archived' ? 'btn-primary-modern' : 'btn-outline'} btn-modern rounded-xl view-switcher" data-view="archived">
+                    <i class="ri-archive-line mr-2"></i> Professeurs archivés
+                    <span class="badge badge-sm ml-2">${this.archivedProfessors.length}</span>
+                </button>
+            </div>
+        `;
+    }
+    
     renderProfessors() {
         const grid = document.getElementById('professors-grid');
         if (!grid) return;
         
         grid.innerHTML = '';
         
-        if (this.professors.length === 0) {
+        const currentList = this.currentView === 'active' ? this.professors : this.archivedProfessors;
+        
+        if (currentList.length === 0) {
+            const message = this.currentView === 'active' 
+                ? 'Aucun professeur actif trouvé'
+                : 'Aucun professeur archivé trouvé';
+                
+            const buttonText = this.currentView === 'active' 
+                ? 'Ajouter un professeur'
+                : 'Voir les professeurs actifs';
+                
+            const buttonId = this.currentView === 'active' 
+                ? 'add-first-professor'
+                : 'switch-to-active';
+                
+            const buttonIcon = this.currentView === 'active' 
+                ? 'ri-user-add-line'
+                : 'ri-user-line';
+                
             grid.innerHTML = `
                 <div class="col-span-4 text-center py-16">
                     <div class="glass-card rounded-2xl p-8 max-w-md mx-auto">
-                        <i class="ri-user-search-line text-5xl text-gray-400 mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Aucun professeur trouvé</h3>
-                        <p class="text-gray-500">Commencez par ajouter votre premier professeur</p>
-                        <button class="btn btn-primary-modern btn-modern mt-4 rounded-xl" id="add-first-professor">
-                            <i class="ri-user-add-line mr-2"></i> Ajouter un professeur
+                        <i class="ri-${this.currentView === 'active' ? 'user-search' : 'archive'}-line text-5xl text-gray-400 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">${message}</h3>
+                        <p class="text-gray-500">${this.currentView === 'active' ? 'Commencez par ajouter votre premier professeur' : 'Les professeurs archivés n\'apparaissent pas dans la liste principale'}</p>
+                        <button class="btn btn-primary-modern btn-modern mt-4 rounded-xl" id="${buttonId}">
+                            <i class="${buttonIcon} mr-2"></i> ${buttonText}
                         </button>
                     </div>
                 </div>
@@ -210,7 +149,7 @@ class ProfessorManager {
             return;
         }
         
-        this.professors.forEach(prof => {
+        currentList.forEach(prof => {
             const user = this.getProfessorUser(prof);
             if (!user) return;
             
@@ -240,12 +179,19 @@ class ProfessorManager {
                     break;
             }
             
+            // Ajouter une bordure rouge pour les archivés
+            const archiveBorder = this.currentView === 'archived' ? 'border-l-4 border-l-red-500' : '';
+            
             card.innerHTML = `
-                <div class="relative">
-                    <div class="h-24 bg-gradient-to-r ${specialtyColor}"></div>
+                <div class="relative ${archiveBorder}">
+                    <div class="h-24 bg-gradient-to-r ${specialtyColor} ${this.currentView === 'archived' ? 'opacity-70' : ''}"></div>
+                    ${this.currentView === 'archived' ? 
+                        '<div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">Archivé</div>' : 
+                        ''
+                    }
                     <div class="absolute -bottom-12 left-6">
                         <img src="${user.avatar}" alt="${user.prenom} ${user.nom}" 
-                             class="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg">
+                             class="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg ${this.currentView === 'archived' ? 'grayscale' : ''}">
                     </div>
                 </div>
                 
@@ -280,9 +226,23 @@ class ProfessorManager {
                         <button class="btn btn-outline btn-sm btn-modern flex-1 view-details" data-id="${prof.id}">
                             <i class="ri-eye-line mr-1"></i> Détails
                         </button>
-                        <button class="btn btn-primary-modern btn-sm btn-modern flex-1 contact-btn" data-id="${prof.id}">
-                            <i class="ri-chat-4-line mr-1"></i> Contacter
-                        </button>
+                        ${this.currentView === 'active' ? 
+                            `<button class="btn btn-primary-modern btn-sm btn-modern flex-1 contact-btn" data-id="${prof.id}">
+                                <i class="ri-chat-4-line mr-1"></i> Contacter
+                            </button>
+                            <button class="btn btn-warning btn-sm btn-modern edit-btn" data-id="${prof.id}" title="Modifier">
+                                <i class="ri-edit-line"></i>
+                            </button>
+                            <button class="btn btn-error btn-sm btn-modern archive-btn" data-id="${prof.id}" title="Archiver">
+                                <i class="ri-archive-line"></i>
+                            </button>` :
+                            `<button class="btn btn-success btn-sm btn-modern restore-btn" data-id="${prof.id}" title="Restaurer">
+                                <i class="ri-refresh-line"></i>
+                            </button>
+                            <button class="btn btn-error btn-sm btn-modern delete-btn" data-id="${prof.id}" title="Supprimer définitivement">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>`
+                        }
                     </div>
                 </div>
             `;
@@ -290,7 +250,11 @@ class ProfessorManager {
             grid.appendChild(card);
         });
         
-        // Mettre à jour les statistiques
+        // Mettre à jour les statistiques (uniquement pour les actifs)
+        this.updateStatistics();
+    }
+    
+    updateStatistics() {
         const totalProfs = document.getElementById('total-professors');
         const totalCourses = document.getElementById('total-courses');
         const totalHours = document.getElementById('total-hours');
@@ -305,6 +269,388 @@ class ProfessorManager {
         const date = new Date(dateString);
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return date.toLocaleDateString('fr-FR', options);
+    }
+
+    // Afficher un modal de confirmation
+    showConfirmationModal(title, message, confirmText, confirmClass, confirmCallback) {
+        const modalId = 'confirmation-modal';
+        let modal = document.getElementById(modalId);
+        
+        if (!modal) {
+            modal = document.createElement('dialog');
+            modal.id = modalId;
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+        
+        modal.innerHTML = `
+            <div class="modal-box max-w-md modal-glass rounded-2xl">
+                <div class="text-center">
+                    <div class="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-red-100 mb-4">
+                        <i class="ri-alert-line text-2xl text-red-600"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">${title}</h3>
+                    <p class="text-gray-600 mb-6">${message}</p>
+                </div>
+                <div class="flex space-x-3 justify-center">
+                    <button class="btn btn-outline btn-modern rounded-xl" id="cancel-confirmation">
+                        <i class="ri-close-line mr-1"></i> Annuler
+                    </button>
+                    <button class="btn ${confirmClass} btn-modern rounded-xl" id="confirm-action">
+                        <i class="ri-check-line mr-1"></i> ${confirmText}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modal.showModal();
+        
+        const cancelBtn = document.getElementById('cancel-confirmation');
+        const confirmBtn = document.getElementById('confirm-action');
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                modal.close();
+            });
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                modal.close();
+                confirmCallback();
+            });
+        }
+        
+        // Fermer le modal en cliquant à l'extérieur
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.close();
+            }
+        });
+    }
+    
+    // Archiver un professeur
+    async archiveProfessor(professorId) {
+        const professor = this.professors.find(p => p.id == professorId);
+        const user = professor ? this.getProfessorUser(professor) : null;
+        const professorName = user ? `${user.prenom} ${user.nom}` : 'ce professeur';
+        
+        this.showConfirmationModal(
+            'Archiver le professeur',
+            `Êtes-vous sûr de vouloir archiver ${professorName} ?`,
+            'Archiver',
+            'btn-warning',
+            async () => {
+                try {
+                    const response = await fetch(`${this.API_BASE}/professeurs/${professorId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            archived: true,
+                            date_archivage: new Date().toISOString()
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error('Erreur lors de l\'archivage');
+                    
+                    await Promise.all([
+                        this.loadProfessors(),
+                        this.loadArchivedProfessors()
+                    ]);
+                    
+                    this.renderViewSwitcher();
+                    this.renderProfessors();
+                    this.showNotification('Professeur archivé avec succès');
+                    
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    this.showNotification('Erreur lors de l\'archivage du professeur', 'error');
+                }
+            }
+        );
+    }
+    
+    // Restaurer un professeur
+    async restoreProfessor(professorId) {
+        const professor = this.archivedProfessors.find(p => p.id == professorId);
+        const user = professor ? this.getProfessorUser(professor) : null;
+        const professorName = user ? `${user.prenom} ${user.nom}` : 'ce professeur';
+        
+        this.showConfirmationModal(
+            'Restaurer le professeur',
+            `Êtes-vous sûr de vouloir restaurer ${professorName} ?`,
+            'Restaurer',
+            'btn-success',
+            async () => {
+                try {
+                    const response = await fetch(`${this.API_BASE}/professeurs/${professorId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            archived: false,
+                            date_archivage: null
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error('Erreur lors de la restauration');
+                    
+                    await Promise.all([
+                        this.loadProfessors(),
+                        this.loadArchivedProfessors()
+                    ]);
+                    
+                    this.renderViewSwitcher();
+                    this.renderProfessors();
+                    this.showNotification('Professeur restauré avec succès');
+                    
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    this.showNotification('Erreur lors de la restauration du professeur', 'error');
+                }
+            }
+        );
+    }
+    
+    // Supprimer définitivement un professeur
+    async deleteProfessor(professorId) {
+        const professor = this.archivedProfessors.find(p => p.id == professorId);
+        const user = professor ? this.getProfessorUser(professor) : null;
+        const professorName = user ? `${user.prenom} ${user.nom}` : 'ce professeur';
+        
+        this.showConfirmationModal(
+            'Supprimer définitivement',
+            `Êtes-vous sûr de vouloir supprimer définitivement ${professorName} ? Cette action est irréversible.`,
+            'Supprimer',
+            'btn-error',
+            async () => {
+                try {
+                    const response = await fetch(`${this.API_BASE}/professeurs/${professorId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) throw new Error('Erreur lors de la suppression');
+                    
+                    await this.loadArchivedProfessors();
+                    this.renderViewSwitcher();
+                    this.renderProfessors();
+                    this.showNotification('Professeur supprimé définitivement');
+                    
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    this.showNotification('Erreur lors de la suppression du professeur', 'error');
+                }
+            }
+        );
+    }
+
+    // Afficher le modal de modification
+    showEditModal(professorId) {
+        const professor = [...this.professors, ...this.archivedProfessors].find(p => p.id == professorId);
+        const user = professor ? this.getProfessorUser(professor) : null;
+        
+        if (!professor || !user) return;
+        
+        const modalId = 'edit-modal';
+        let modal = document.getElementById(modalId);
+        
+        if (!modal) {
+            modal = document.createElement('dialog');
+            modal.id = modalId;
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+        
+        modal.innerHTML = `
+            <div class="modal-box max-w-2xl modal-glass rounded-2xl">
+                <h3 class="font-bold text-lg mb-4">Modifier le professeur</h3>
+                
+                <form id="edit-professor-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Nom</span>
+                            </label>
+                            <input type="text" id="edit-lastname" value="${user.nom}" class="input input-bordered w-full rounded-xl">
+                        </div>
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Prénom</span>
+                            </label>
+                            <input type="text" id="edit-firstname" value="${user.prenom}" class="input input-bordered w-full rounded-xl">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Email</span>
+                            </label>
+                            <input type="email" id="edit-email" value="${user.email}" class="input input-bordered w-full rounded-xl">
+                        </div>
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Téléphone</span>
+                            </label>
+                            <input type="tel" id="edit-phone" value="${user.telephone}" class="input input-bordered w-full rounded-xl">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Spécialité</span>
+                            </label>
+                            <select id="edit-speciality" class="select select-bordered w-full rounded-xl">
+                                <option value="Informatique" ${professor.specialite === 'Informatique' ? 'selected' : ''}>Informatique</option>
+                                <option value="Mathématiques" ${professor.specialite === 'Mathématiques' ? 'selected' : ''}>Mathématiques</option>
+                                <option value="Physique" ${professor.specialite === 'Physique' ? 'selected' : ''}>Physique</option>
+                                <option value="Chimie" ${professor.specialite === 'Chimie' ? 'selected' : ''}>Chimie</option>
+                                <option value="Biologie" ${professor.specialite === 'Biologie' ? 'selected' : ''}>Biologie</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label">
+                                <span class="label-text">Grade</span>
+                            </label>
+                            <select id="edit-grade" class="select select-bordered w-full rounded-xl">
+                                <option value="Professeur" ${professor.grade === 'Professeur' ? 'selected' : ''}>Professeur</option>
+                                <option value="Maître de conférences" ${professor.grade === 'Maître de conférences' ? 'selected' : ''}>Maître de conférences</option>
+                                <option value="Chargé de cours" ${professor.grade === 'Chargé de cours' ? 'selected' : ''}>Chargé de cours</option>
+                                <option value="Assistant" ${professor.grade === 'Assistant' ? 'selected' : ''}>Assistant</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text">Date d'embauche</span>
+                        </label>
+                        <input type="date" id="edit-hiredate" value="${professor.date_embauche}" class="input input-bordered w-full rounded-xl">
+                    </div>
+                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text">Adresse</span>
+                        </label>
+                        <textarea id="edit-address" class="textarea textarea-bordered w-full rounded-xl">${user.adresse || ''}</textarea>
+                    </div>
+                </form>
+                
+                <div class="modal-action mt-6">
+                    <button class="btn btn-outline btn-modern rounded-xl" id="cancel-edit">
+                        <i class="ri-close-line mr-1"></i> Annuler
+                    </button>
+                    <button class="btn btn-primary-modern btn-modern rounded-xl" id="save-edit" data-id="${professor.id}">
+                        <i class="ri-save-line mr-1"></i> Sauvegarder
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modal.showModal();
+        
+        const cancelBtn = document.getElementById('cancel-edit');
+        const saveBtn = document.getElementById('save-edit');
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                modal.close();
+            });
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.updateProfessor(professor.id);
+            });
+        }
+        
+        // Fermer le modal en cliquant à l'extérieur
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.close();
+            }
+        });
+    }
+
+    // Mettre à jour un professeur
+    async updateProfessor(professorId) {
+        const lastName = document.getElementById('edit-lastname');
+        const firstName = document.getElementById('edit-firstname');
+        const email = document.getElementById('edit-email');
+        const phone = document.getElementById('edit-phone');
+        const speciality = document.getElementById('edit-speciality');
+        const grade = document.getElementById('edit-grade');
+        const hireDate = document.getElementById('edit-hiredate');
+        const address = document.getElementById('edit-address');
+        
+        if (!lastName || !firstName || !email || !phone || !speciality || !grade || !hireDate || !address) {
+            return;
+        }
+        
+        try {
+            // Mettre à jour l'utilisateur
+            const professor = [...this.professors, ...this.archivedProfessors].find(p => p.id == professorId);
+            const user = professor ? this.getProfessorUser(professor) : null;
+            
+            if (!user) {
+                throw new Error('Utilisateur non trouvé');
+            }
+            
+            const userResponse = await fetch(`${this.API_BASE}/utilisateurs/${user.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nom: lastName.value.trim(),
+                    prenom: firstName.value.trim(),
+                    email: email.value.trim(),
+                    telephone: phone.value.trim(),
+                    adresse: address.value.trim()
+                })
+            });
+            
+            if (!userResponse.ok) throw new Error('Erreur lors de la mise à jour de l\'utilisateur');
+            
+            // Mettre à jour le professeur
+            const profResponse = await fetch(`${this.API_BASE}/professeurs/${professorId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    specialite: speciality.value,
+                    grade: grade.value,
+                    date_embauche: hireDate.value
+                })
+            });
+            
+            if (!profResponse.ok) throw new Error('Erreur lors de la mise à jour du professeur');
+            
+            // Recharger les données
+            await Promise.all([
+                this.loadProfessors(),
+                this.loadArchivedProfessors(),
+                this.loadUtilisateurs()
+            ]);
+            
+            this.renderViewSwitcher();
+            this.renderProfessors();
+            
+            // Fermer le modal
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.close();
+            
+            this.showNotification('Professeur modifié avec succès');
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            this.showNotification('Erreur lors de la modification du professeur', 'error');
+        }
     }
     
     validateForm() {
@@ -471,17 +817,31 @@ class ProfessorManager {
             document.body.appendChild(modal);
         }
         
+        const archiveInfo = prof.archived ? 
+            `<div class="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
+                <div class="flex items-center text-red-700">
+                    <i class="ri-archive-line mr-2"></i>
+                    <span class="font-semibold">Ce professeur est archivé</span>
+                </div>
+                ${prof.date_archivage ? 
+                    `<p class="text-red-600 text-sm mt-1">Archivé le: ${this.formatDate(prof.date_archivage)}</p>` : 
+                    ''
+                }
+            </div>` : '';
+        
         modal.innerHTML = `
             <div class="modal-box max-w-2xl modal-glass rounded-2xl">
                 <h3 class="font-bold text-lg mb-4">Détails du professeur</h3>
                 <div class="flex items-center mb-6">
                     <img src="${user.avatar}" alt="${user.prenom} ${user.nom}" 
-                         class="w-20 h-20 rounded-2xl object-cover shadow-md mr-6">
+                         class="w-20 h-20 rounded-2xl object-cover shadow-md mr-6 ${prof.archived ? 'grayscale' : ''}">
                     <div>
                         <h4 class="font-semibold text-xl">${user.prenom} ${user.nom}</h4>
                         <p class="text-gray-600">${prof.specialite}</p>
+                        ${prof.archived ? '<span class="badge badge-error mt-1">Archivé</span>' : ''}
                     </div>
                 </div>
+                ${archiveInfo}
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -519,6 +879,17 @@ class ProfessorManager {
                     </div>
                 </div>
                 <div class="modal-action mt-6">
+                    ${prof.archived ? 
+                        `<button class="btn btn-success btn-modern rounded-xl restore-from-details" data-id="${prof.id}">
+                            <i class="ri-refresh-line mr-1"></i> Restaurer
+                        </button>` : 
+                        `<button class="btn btn-warning btn-modern rounded-xl edit-from-details" data-id="${prof.id}">
+                            <i class="ri-edit-line mr-1"></i> Modifier
+                        </button>
+                        <button class="btn btn-error btn-modern rounded-xl archive-from-details" data-id="${prof.id}">
+                            <i class="ri-archive-line mr-1"></i> Archiver
+                        </button>`
+                    }
                     <button class="btn btn-primary-modern btn-modern rounded-xl" id="close-details">Fermer</button>
                 </div>
             </div>
@@ -530,6 +901,31 @@ class ProfessorManager {
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
                 modal.close();
+            });
+        }
+        
+        // Ajouter les écouteurs pour les boutons dans le modal
+        const archiveBtn = modal.querySelector('.archive-from-details');
+        if (archiveBtn) {
+            archiveBtn.addEventListener('click', () => {
+                this.archiveProfessor(prof.id);
+                modal.close();
+            });
+        }
+        
+        const restoreBtn = modal.querySelector('.restore-from-details');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', () => {
+                this.restoreProfessor(prof.id);
+                modal.close();
+            });
+        }
+        
+        const editBtn = modal.querySelector('.edit-from-details');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                modal.close();
+                this.showEditModal(prof.id);
             });
         }
     }
@@ -626,7 +1022,9 @@ class ProfessorManager {
                     id_utilisateur: newUser.id,
                     specialite: professorData.speciality,
                     grade: professorData.grade,
-                    date_embauche: professorData.hireDate
+                    date_embauche: professorData.hireDate,
+                    archived: false,
+                    date_archivage: null
                 })
             });
             
@@ -635,9 +1033,13 @@ class ProfessorManager {
             const newProfessor = await profResponse.json();
             
             // Recharger les données
-            await this.loadProfessors();
-            await this.loadUtilisateurs();
+            await Promise.all([
+                this.loadProfessors(),
+                this.loadArchivedProfessors(),
+                this.loadUtilisateurs()
+            ]);
             
+            this.renderViewSwitcher();
             this.renderProfessors();
             this.showNotification(`Professeur ${professorData.firstName} ${professorData.lastName} ajouté avec succès`);
             
@@ -655,7 +1057,6 @@ class ProfessorManager {
         const searchInput = document.getElementById('search-input');
         const avatarInput = document.getElementById('prof-avatar');
         const professorForm = document.getElementById('professor-form');
-        const addFirstProfessor = document.getElementById('add-first-professor');
         
         if (addButton) {
             addButton.addEventListener('click', () => {
@@ -678,13 +1079,6 @@ class ProfessorManager {
             });
         }
         
-        if (addFirstProfessor) {
-            addFirstProfessor.addEventListener('click', () => {
-                const modal = document.getElementById('professor-modal');
-                if (modal) modal.showModal();
-            });
-        }
-        
         if (cancelButton) {
             cancelButton.addEventListener('click', () => {
                 const modal = document.getElementById('professor-modal');
@@ -698,8 +1092,13 @@ class ProfessorManager {
                 if (loadingOverlay) loadingOverlay.style.display = 'flex';
                 
                 try {
-                    await this.loadProfessors();
-                    await this.loadUtilisateurs();
+                    await Promise.all([
+                        this.loadProfessors(),
+                        this.loadArchivedProfessors(),
+                        this.loadUtilisateurs()
+                    ]);
+                    
+                    this.renderViewSwitcher();
                     this.renderProfessors();
                     this.showNotification('Liste des professeurs actualisée');
                 } catch (error) {
@@ -763,18 +1162,45 @@ class ProfessorManager {
         
         // Délégation d'événements pour les éléments dynamiques
         document.addEventListener('click', (e) => {
+            // Switch de vue
+            if (e.target.classList.contains('view-switcher') || e.target.closest('.view-switcher')) {
+                const btn = e.target.classList.contains('view-switcher') 
+                    ? e.target 
+                    : e.target.closest('.view-switcher');
+                const view = btn.dataset.view;
+                
+                this.currentView = view;
+                this.renderViewSwitcher();
+                this.renderProfessors();
+            }
+            
+            // Bouton "Voir les actifs" dans la vue archivée
+            if (e.target.id === 'switch-to-active' || e.target.closest('#switch-to-active')) {
+                this.currentView = 'active';
+                this.renderViewSwitcher();
+                this.renderProfessors();
+            }
+            
+            // Bouton "Ajouter premier professeur"
+            if (e.target.id === 'add-first-professor' || e.target.closest('#add-first-professor')) {
+                const modal = document.getElementById('professor-modal');
+                if (modal) modal.showModal();
+            }
+            
+            // Détails du professeur
             if (e.target.classList.contains('view-details') || e.target.closest('.view-details')) {
                 const btn = e.target.classList.contains('view-details') 
                     ? e.target 
                     : e.target.closest('.view-details');
                 const id = btn.dataset.id;
                 
-                const prof = this.professors.find(p => p.id == id);
+                const prof = [...this.professors, ...this.archivedProfessors].find(p => p.id == id);
                 if (prof) {
                     this.showProfessorDetails(prof);
                 }
             }
             
+            // Contact
             if (e.target.classList.contains('contact-btn') || e.target.closest('.contact-btn')) {
                 const btn = e.target.classList.contains('contact-btn') 
                     ? e.target 
@@ -785,6 +1211,46 @@ class ProfessorManager {
                 if (prof) {
                     this.showContactModal(prof);
                 }
+            }
+            
+            // Modification
+            if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
+                const btn = e.target.classList.contains('edit-btn') 
+                    ? e.target 
+                    : e.target.closest('.edit-btn');
+                const id = btn.dataset.id;
+                
+                this.showEditModal(id);
+            }
+            
+            // Archivage
+            if (e.target.classList.contains('archive-btn') || e.target.closest('.archive-btn')) {
+                const btn = e.target.classList.contains('archive-btn') 
+                    ? e.target 
+                    : e.target.closest('.archive-btn');
+                const id = btn.dataset.id;
+                
+                this.archiveProfessor(id);
+            }
+            
+            // Restauration
+            if (e.target.classList.contains('restore-btn') || e.target.closest('.restore-btn')) {
+                const btn = e.target.classList.contains('restore-btn') 
+                    ? e.target 
+                    : e.target.closest('.restore-btn');
+                const id = btn.dataset.id;
+                
+                this.restoreProfessor(id);
+            }
+            
+            // Suppression définitive
+            if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
+                const btn = e.target.classList.contains('delete-btn') 
+                    ? e.target 
+                    : e.target.closest('.delete-btn');
+                const id = btn.dataset.id;
+                
+                this.deleteProfessor(id);
             }
         });
     }
@@ -826,7 +1292,10 @@ class ProfessorManager {
 
 // Initialisation de la page
 document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = new SidebarComponent('sidebar-container', 'professeurs');
+    const currentPage = window.location.pathname.includes('professeurs') ? 'professeurs' : 
+                         window.location.pathname.includes('classes') ? 'classes' : 
+                          window.location.pathname.includes('cours') ? 'cours' : 'dashboard';
+    const sidebar = new SidebarComponent('sidebar-container', 'currentPage');
     sidebar.render();
     
     const professorManager = new ProfessorManager();

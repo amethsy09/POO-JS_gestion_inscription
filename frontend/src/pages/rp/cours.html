@@ -9,89 +9,189 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <style>
-        .sidebar {
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-        }
-        .input-error {
-            border-color: #ef4444;
-            border-width: 2px;
-        }
-        .badge-success {
-            background-color: #10b981;
-            color: white;
-        }
-        .badge-warning {
-            background-color: #f59e0b;
-            color: white;
-        }
-        .badge-secondary {
-            background-color: #6b7280;
-            color: white;
-        }
-        .main-content {
-            margin-left: 14rem;
-        }
-        .active-link {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid white;
-        }
-        .sidebar-logo {
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-        }
-        .loading-spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(0,0,0,0.1);
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .error-message {
-            color: #ef4444;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        #loading-overlay {
+        /* ===== SIDEBAR STYLES ===== */
+        #sidebar-container {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            z-index: 40;
         }
+
+        .sidebar {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            height: 100vh;
+            width: 14rem;
+        }
+
+        .sidebar-logo {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            color: #e5e7eb;
+            text-decoration: none;
+            margin: 0.25rem 0;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .active-link {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border-left: 3px solid white !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .active-link i {
+            color: white;
+        }
+
+        /* ===== MAIN CONTENT STYLES ===== */
+        .main-content {
+            margin-left: 14rem;
+            min-height: 100vh;
+            background: #f8fafc;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        /* ===== CALENDAR STYLES ===== */
+        .fc-event {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            border-radius: 6px;
+        }
+
+        .fc-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .fc-toolbar {
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .fc-header-toolbar {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .fc-daygrid-event {
+            padding: 4px 8px;
+        }
+
+        /* ===== NOTIFICATION & LOADING STYLES ===== */
         .notification-container {
             position: fixed;
             top: 1rem;
             right: 1rem;
             z-index: 1000;
         }
+
         .notification {
             animation: slideIn 0.3s ease-out;
         }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid #e5e7eb;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        /* ===== FORM STYLES ===== */
+        .input-error {
+            border-color: #ef4444 !important;
+            border-width: 2px;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* ===== BADGE STYLES ===== */
+        .badge-success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .badge-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        /* ===== COURSE COLOR STYLES ===== */
+        .course-color-1 { background-color: #3b82f6; border-color: #3b82f6; }
+        .course-color-2 { background-color: #10b981; border-color: #10b981; }
+        .course-color-3 { background-color: #f59e0b; border-color: #f59e0b; }
+        .course-color-4 { background-color: #8b5cf6; border-color: #8b5cf6; }
+        .course-color-5 { background-color: #ec4899; border-color: #ec4899; }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -102,22 +202,193 @@
                 transform: translateX(0);
             }
         }
-        .fc-event {
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
-        .fc-event:hover {
+
+        /* ===== CARD STYLES ===== */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== BUTTON STYLES ===== */
+        .btn-modern {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary-modern {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            color: white;
+        }
+
+        .btn-primary-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
         }
-        .course-color-1 { background-color: #3b82f6; border-color: #3b82f6; }
-        .course-color-2 { background-color: #10b981; border-color: #10b981; }
-        .course-color-3 { background-color: #f59e0b; border-color: #f59e0b; }
-        .course-color-4 { background-color: #8b5cf6; border-color: #8b5cf6; }
-        .course-color-5 { background-color: #ec4899; border-color: #ec4899; }
-        #logout-btn {
-            cursor: pointer;
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            #sidebar-container {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            #sidebar-container.mobile-open {
+                transform: translateX(0);
+            }
+            
+            header {
+                margin-left: 0;
+                width: 100%;
+            }
         }
+
+        /* ===== UTILITY STYLES ===== */
+        .shadow-custom {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .border-custom {
+            border: 1px solid #e5e7eb;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ===== FULLCALENDAR CUSTOMIZATIONS ===== */
+        .fc .fc-toolbar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .fc .fc-button {
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: #374151;
+        }
+
+        .fc .fc-button:hover {
+            background: #f3f4f6;
+        }
+
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+
+        .fc .fc-daygrid-day-number {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #374151;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+
+        /* ===== MODAL STYLES ===== */
+        .modal-box {
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ===== SCROLLBAR STYLES ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Styles pour l'archivage */
+.course-archiving {
+  animation: archiveAnimation 0.3s ease-in-out forwards;
+}
+
+@keyframes archiveAnimation {
+  0% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+  50% { 
+    transform: scale(0.95); 
+    opacity: 0.7; 
+  }
+  100% { 
+    transform: scale(0.9); 
+    opacity: 0; 
+  }
+}
+
+/* Styles pour les modaux */
+.fixed {
+  position: fixed;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.z-50 {
+  z-index: 50;
+}
+
+.max-h-96 {
+  max-height: 24rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* Animation de shake pour les erreurs */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -130,72 +401,75 @@
     <!-- Loading Overlay -->
     <div id="loading-overlay">
         <div class="text-center">
-            <div class="loading-spinner mx-auto" style="width: 3rem; height: 3rem;"></div>
-            <p class="mt-4 text-lg font-medium">Chargement du planning...</p>
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-4 text-lg font-medium text-gray-700">Chargement du planning...</p>
+            <p class="text-gray-500 mt-2">Veuillez patienter</p>
         </div>
     </div>
     
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Navigation -->
-        <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center">
-                    <div class="ml-4">
-                        <h1 class="text-2xl font-bold text-gray-800">Planning des Cours</h1>
-                        <p class="text-gray-600">Responsable Pédagogique</p>
-                    </div>
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Planning des Cours</h1>
+                    <p class="text-gray-600 mt-1">Gestion du calendrier académique</p>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <button class="btn btn-ghost glass-card rounded-xl" id="refresh-btn">
+                        <i class="ri-refresh-line mr-2"></i> Actualiser
+                    </button>
                     <div class="relative">
-                        <button class="btn btn-ghost btn-circle">
+                        <button class="btn btn-ghost btn-circle glass-card w-12 h-12">
                             <i class="ri-notification-3-line text-xl"></i>
                         </button>
-                        <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">1</span>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-semibold">3</span>
                     </div>
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" class="avatar cursor-pointer">
-                            <div class="w-12 rounded-full bg-gray-200 border-2 border-dashed" />
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+                                RP
+                            </div>
                         </div>
-                        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 mt-2">
-                            <li><a><i class="ri-user-line"></i> Mon profil</a></li>
-                            <li><a><i class="ri-settings-3-line"></i> Paramètres</a></li>
-                            <!-- Bouton de déconnexion avec ID -->
-                            <li><a class="text-red-500" id="logout-btn"><i class="ri-logout-circle-r-line"></i> Déconnexion</a></li>
+                        <ul tabindex="0" class="dropdown-content menu p-3 shadow bg-base-100 rounded-box w-52 mt-2 glass-card border border-gray-100">
+                            <li><a class="rounded-lg hover:bg-gray-50"><i class="ri-user-line mr-2"></i> Mon profil</a></li>
+                            <li><a class="rounded-lg hover:bg-gray-50"><i class="ri-settings-3-line mr-2"></i> Paramètres</a></li>
+                            <li><a class="rounded-lg text-red-500 hover:bg-red-50" id="logout-btn"><i class="ri-logout-circle-r-line mr-2"></i> Déconnexion</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="max-w-7xl mx-auto px-8 py-8">
             <!-- Main Dashboard -->
-            <div class="space-y-6">
+            <div class="space-y-8">
                 <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Actions rapides</h2>
-                    <div class="flex flex-wrap gap-3">
-                        <button id="add-course-btn" class="btn btn-primary">
+                <div class="glass-card rounded-2xl p-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Actions rapides</h2>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="add-course-btn" class="btn btn-primary btn-modern px-6">
                             <i class="ri-add-line mr-2"></i> Planifier un cours
                         </button>
-                        <button id="current-week-btn" class="btn btn-outline">
+                        <button id="current-week-btn" class="btn btn-outline btn-modern px-6">
                             <i class="ri-calendar-event-line mr-2"></i> Semaine actuelle
                         </button>
-                        <button id="refresh-btn" class="btn btn-outline">
+                        <button id="refresh-btn" class="btn btn-outline btn-modern px-6">
                             <i class="ri-refresh-line mr-2"></i> Actualiser
                         </button>
                     </div>
                 </div>
 
                 <!-- Filters -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Filtres</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card rounded-2xl p-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Filtres</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text">Classe</span>
+                                <span class="label-text font-semibold">Classe</span>
                             </label>
-                            <select class="select select-bordered" id="class-filter">
+                            <select class="select select-bordered rounded-xl" id="class-filter">
                                 <option value="all">Toutes les classes</option>
                                 <option>L1 Informatique</option>
                                 <option>L2 Mathématiques</option>
@@ -205,9 +479,9 @@
                         </div>
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text">Professeur</span>
+                                <span class="label-text font-semibold">Professeur</span>
                             </label>
-                            <select class="select select-bordered" id="professor-filter">
+                            <select class="select select-bordered rounded-xl" id="professor-filter">
                                 <option value="all">Tous les professeurs</option>
                                 <option>Dr. Sophie Martin</option>
                                 <option>Prof. Alioune Diop</option>
@@ -217,9 +491,9 @@
                         </div>
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text">Salle</span>
+                                <span class="label-text font-semibold">Salle</span>
                             </label>
-                            <select class="select select-bordered" id="room-filter">
+                            <select class="select select-bordered rounded-xl" id="room-filter">
                                 <option value="all">Toutes les salles</option>
                                 <option>Salle A101</option>
                                 <option>Salle B203</option>
@@ -229,9 +503,9 @@
                         </div>
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text">Module</span>
+                                <span class="label-text font-semibold">Module</span>
                             </label>
-                            <select class="select select-bordered" id="module-filter">
+                            <select class="select select-bordered rounded-xl" id="module-filter">
                                 <option value="all">Tous les modules</option>
                                 <option>Algorithmique</option>
                                 <option>Base de données</option>
@@ -243,8 +517,8 @@
                 </div>
 
                 <!-- Calendar Section -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div id="calendar" class="h-screen"></div>
+                <div class="glass-card rounded-2xl p-6 border border-gray-100">
+                    <div id="calendar" class="min-h-screen rounded-xl overflow-hidden"></div>
                 </div>
             </div>
         </div>
@@ -253,17 +527,17 @@
     <!-- Modals -->
     <!-- Add/Edit Course Modal -->
     <dialog id="course-modal" class="modal">
-        <div class="modal-box max-w-2xl">
-            <h3 class="font-bold text-xl mb-6" id="modal-title">Planifier un nouveau cours</h3>
-            <form id="course-form">
+        <div class="modal-box max-w-4xl modal-glass rounded-2xl">
+            <h3 class="font-bold text-2xl mb-6 text-gray-900" id="modal-title">Planifier un nouveau cours</h3>
+            <form id="course-form" class="space-y-6">
                 <input type="hidden" id="course-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Module -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Module</span>
+                            <span class="label-text font-semibold">Module</span>
                         </label>
-                        <select class="select select-bordered" id="course-module">
+                        <select class="select select-bordered rounded-xl" id="course-module">
                             <option value="" disabled selected>Sélectionner un module</option>
                             <option>Algorithmique</option>
                             <option>Base de données</option>
@@ -278,9 +552,9 @@
                     <!-- Classe -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Classe</span>
+                            <span class="label-text font-semibold">Classe</span>
                         </label>
-                        <select class="select select-bordered" id="course-class">
+                        <select class="select select-bordered rounded-xl" id="course-class">
                             <option value="" disabled selected>Sélectionner une classe</option>
                             <option>L1 Informatique</option>
                             <option>L2 Informatique</option>
@@ -295,9 +569,9 @@
                     <!-- Professeur -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Professeur</span>
+                            <span class="label-text font-semibold">Professeur</span>
                         </label>
-                        <select class="select select-bordered" id="course-professor">
+                        <select class="select select-bordered rounded-xl" id="course-professor">
                             <option value="" disabled selected>Sélectionner un professeur</option>
                             <option>Dr. Sophie Martin</option>
                             <option>Prof. Alioune Diop</option>
@@ -311,9 +585,9 @@
                     <!-- Salle -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Salle</span>
+                            <span class="label-text font-semibold">Salle</span>
                         </label>
-                        <select class="select select-bordered" id="course-room">
+                        <select class="select select-bordered rounded-xl" id="course-room">
                             <option value="" disabled selected>Sélectionner une salle</option>
                             <option>Salle A101</option>
                             <option>Salle A102</option>
@@ -329,27 +603,27 @@
                     <!-- Date et heure de début -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Date et heure de début</span>
+                            <span class="label-text font-semibold">Date et heure de début</span>
                         </label>
-                        <input type="datetime-local" class="input input-bordered" id="course-start">
+                        <input type="datetime-local" class="input input-bordered rounded-xl" id="course-start">
                         <div class="error-message" id="error-course-start">Veuillez sélectionner une date et heure valide</div>
                     </div>
                     
                     <!-- Date et heure de fin -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Date et heure de fin</span>
+                            <span class="label-text font-semibold">Date et heure de fin</span>
                         </label>
-                        <input type="datetime-local" class="input input-bordered" id="course-end">
+                        <input type="datetime-local" class="input input-bordered rounded-xl" id="course-end">
                         <div class="error-message" id="error-course-end">Veuillez sélectionner une date et heure valide</div>
                     </div>
                     
                     <!-- Type de cours -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Type de cours</span>
+                            <span class="label-text font-semibold">Type de cours</span>
                         </label>
-                        <select class="select select-bordered" id="course-type">
+                        <select class="select select-bordered rounded-xl" id="course-type">
                             <option value="cours">Cours magistral</option>
                             <option value="td">Travaux dirigés</option>
                             <option value="tp">Travaux pratiques</option>
@@ -360,43 +634,45 @@
                     <!-- Couleur -->
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Couleur d'affichage</span>
+                            <span class="label-text font-semibold">Couleur d'affichage</span>
                         </label>
-                        <div class="flex space-x-2">
-                            <div class="tooltip" data-tip="Bleu">
+                        <div class="flex space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="course-color" value="1" class="radio radio-primary" checked />
-                            </div>
-                            <div class="tooltip" data-tip="Vert">
+                                <span class="flex items-center">
+                                    <span class="w-4 h-4 bg-blue-500 rounded mr-1"></span> Bleu
+                                </span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="course-color" value="2" class="radio radio-success" />
-                            </div>
-                            <div class="tooltip" data-tip="Orange">
+                                <span class="flex items-center">
+                                    <span class="w-4 h-4 bg-green-500 rounded mr-1"></span> Vert
+                                </span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
                                 <input type="radio" name="course-color" value="3" class="radio radio-warning" />
-                            </div>
-                            <div class="tooltip" data-tip="Violet">
-                                <input type="radio" name="course-color" value="4" class="radio radio-secondary" />
-                            </div>
-                            <div class="tooltip" data-tip="Rose">
-                                <input type="radio" name="course-color" value="5" class="radio radio-accent" />
-                            </div>
+                                <span class="flex items-center">
+                                    <span class="w-4 h-4 bg-orange-500 rounded mr-1"></span> Orange
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>
-                <div class="modal-action mt-6">
-                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                <div class="modal-action mt-8 pt-6 border-t">
+                    <button type="submit" class="btn btn-primary btn-modern px-8">
                         <span id="submit-text">Enregistrer</span>
                         <span id="submit-spinner" class="loading-spinner ml-2 hidden"></span>
                     </button>
-                    <button type="button" class="btn btn-ghost" id="cancel-course-modal">Annuler</button>
+                    <button type="button" class="btn btn-ghost btn-modern px-8" id="cancel-course-modal">Annuler</button>
                 </div>
             </form>
         </div>
     </dialog>
-      <script type="module" src="../../../public/assets/javascript/rp/rp.cours.js"></script>
+
+    <script type="module" src="../../../public/assets/javascript/rp/rp.cours.js"></script>
 
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.min.js'></script>
-
-    
 </body>
 </html>

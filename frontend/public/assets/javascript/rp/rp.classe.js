@@ -1,95 +1,7 @@
 import { router } from "../../../../src/router/router.js";
-
+import { SidebarComponent } from "../../../../src/components/sidebar/sidebar.js";
 // Classe Sidebar
-class SidebarComponent {
-    constructor(containerId) {
-        this.containerId = containerId;
-        this.activeLink = 'classes';
-        this.links = [
-            { id: 'dashboard', icon: 'ri-dashboard-line', text: 'Dashboard' },
-            { id: 'classes', icon: 'ri-group-line', text: 'Classes' },
-            { id: 'professeurs', icon: 'ri-user-star-line', text: 'Professeurs' },
-            { id: 'cours', icon: 'ri-book-open-line', text: 'Cours' },
-        ];
-    }
-    
-    render() {
-        const container = document.getElementById(this.containerId);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <aside class="fixed top-0 left-0 h-full w-56 bg-white shadow-md z-50">
-                <div class="sidebar-logo p-4 border-b">
-                    <h1 class="text-xl font-bold text-white">Ecole 221</h1>
-                </div>
-                <nav class="mt-4">
-                    <ul>
-                        ${this.links.map(link => `
-                            <li>
-                                <a href="${link.path}" 
-                                   class="sidebar-link px-4 py-3 flex items-center text-gray-700"
-                                   id="link-${link.id}"
-                                   data-link="${link.id}">
-                                    <i class="${link.icon} mr-3"></i>
-                                    <span>${link.text}</span>
-                                </a>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </nav>
-            </aside>
-        `;
-        
-        this.addEventListeners();
-        this.setActiveLink(this.activeLink);
-    }
-    
-    addEventListeners() {
-        this.links.forEach(link => {
-            const element = document.getElementById(`link-${link.id}`);
-            if (element) {
-                element.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.setActiveLink(link.id);
-                    this.handleNavigation(link.id);
-                });
-            }
-        });
-    }
-    
-    setActiveLink(linkId) {
-        this.activeLink = linkId;
-        
-        this.links.forEach(link => {
-            const element = document.getElementById(`link-${link.id}`);
-            if (element) {
-                element.classList.remove('active-link', 'text-indigo-700', 'bg-indigo-50');
-            }
-        });
-        
-        const activeElement = document.getElementById(`link-${linkId}`);
-        if (activeElement) {
-            activeElement.classList.add('active-link', 'text-indigo-700', 'bg-indigo-50');
-        }
-    }
-    
-    handleNavigation(linkId) {
-        if (linkId === 'classes') return;
-        if (linkId === 'professeurs') {
-            window.location.href = 'professeurs.html';
-        } else if (linkId === 'dashboard') {
-            window.location.href = 'dashboard.html';
-        } else if (linkId === 'cours') {
-            window.location.href = 'cours.html';
-        } else {
-            this.showToast(`Navigation vers ${linkId}.html`, 'info');
-        }
-    }
 
-    showToast(message, type = 'info') {
-        this.showNotification(message, type);
-    }
-}
 
 // Classe principale pour la gestion des classes avec Fetch API
 class ClassManager {
@@ -101,7 +13,7 @@ class ClassManager {
         this.niveaux = [];
         this.annees = [];
         this.showArchived = false; // Nouvelle variable pour gérer l'affichage des archives
-        this.init();
+        this.init();    
     }
     
     async init() {
@@ -869,7 +781,10 @@ class ClassManager {
 
 // Initialiser l'application
 document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = new SidebarComponent('sidebar-container');
+    const currentPage =  window.location.pathname.includes('classes') ? 'classes' :
+                          window.location.pathname.includes('professeurs') ? 'professeurs' :
+                          window.location.pathname.includes('cours') ? 'cours' : 'dashboard';
+    const sidebar = new SidebarComponent('sidebar-container', currentPage);
     sidebar.render();
     
     const classManager = new ClassManager();
