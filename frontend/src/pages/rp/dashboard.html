@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | RP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --professor-primary: #7e22ce;
+      --professor-secondary: #a855f7;
+      --professor-accent: #d8b4fe;
+      --professor-light: #faf5ff;
+      --professor-dark: #581c87;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .chart-container {
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+    }
+    .sidebar-logo {
+      background: linear-gradient(135deg, var(--professor-primary) 0%, var(--professor-secondary) 100%);
+    }
+    .sidebar-link {
+      display: block;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+    .sidebar-link:hover {
+      background-color: var(--professor-light);
+    }
+    .active-link {
+      color: var(--professor-primary);
+      background-color: var(--professor-light);
+      border-left: 4px solid var(--professor-primary);
+    }
+    
+    .professor-gradient {
+      background: linear-gradient(135deg, var(--professor-primary) 0%, var(--professor-secondary) 100%);
+    }
+    
+    .professor-card {
+      border-left-color: var(--professor-primary);
+    }
+    
+    .professor-icon {
+      background-color: var(--professor-light);
+      color: var(--professor-primary);
+    }
+    
+    .professor-badge {
+      background: linear-gradient(135deg, var(--professor-light) 0%, var(--professor-accent) 100%);
+      color: var(--professor-dark);
+    }
+  </style>
+</head>
+<body class="flex h-screen bg-gray-50">
+  <!-- Container pour le composant sidebar -->
+  <div id="sidebar-container"></div>
+  
+  <!-- Main Content -->
+  <div class="flex-1 overflow-auto lg:ml-56">
+    <div class="p-6">
+      <!-- Welcome Banner -->
+      <div class="professor-gradient rounded-xl p-6 mb-6 text-white">
+        <h1 class="text-2xl font-bold mb-2">Bienvenue sur votre Dashboard</h1>
+        <p class="opacity-90">Consultez les statistiques et analyses de votre établissement</p>
+      </div>
+      
+      <!-- Stats Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Classes Card -->
+        <div class="stat-card bg-white rounded-xl shadow-md p-6 transition-all duration-300 border-l-4 border-blue-500">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Statistiques des Classes</p>
+              <h3 class="text-3xl font-bold mt-2 text-gray-800" id="total-classes">24</h3>
+            </div>
+            <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
+              <i class="ri-building-line text-2xl"></i>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Total</span>
+              <span class="text-sm font-medium text-gray-700" id="total-classes-data">24</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Archivées</span>
+              <span class="text-sm font-medium text-red-500" id="archived-classes">3</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Disponibles</span>
+              <span class="text-sm font-medium text-green-500" id="available-classes">21</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Professeurs Card - MODIFIÉ avec couleurs harmonisées -->
+        <div class="stat-card professor-card bg-white rounded-xl shadow-md p-6 transition-all duration-300 border-l-4 border-purple-600">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Statistiques des Professeurs</p>
+              <h3 class="text-3xl font-bold mt-2 text-gray-800" id="total-professeurs">42</h3>
+            </div>
+            <div class="p-3 rounded-lg professor-icon">
+              <i class="ri-user-star-line text-2xl"></i>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Total</span>
+              <span class="text-sm font-medium text-gray-700" id="total-professeurs-data">42</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Archivés</span>
+              <span class="text-sm font-medium text-red-500" id="archived-professeurs">5</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Disponibles</span>
+              <span class="text-sm font-medium text-green-600" id="available-professeurs">37</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Cours Card -->
+        <div class="stat-card bg-white rounded-xl shadow-md p-6 transition-all duration-300 border-l-4 border-teal-500">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Statistiques des Cours</p>
+              <h3 class="text-3xl font-bold mt-2 text-gray-800" id="total-cours">156</h3>
+            </div>
+            <div class="p-3 rounded-lg bg-teal-50 text-teal-600">
+              <i class="ri-book-open-line text-2xl"></i>
+            </div>
+          </div>
+          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Total</span>
+              <span class="text-sm font-medium text-gray-700" id="total-cours-data">156</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Archivés</span>
+              <span class="text-sm font-medium text-red-500" id="archived-cours">12</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">Planifiés</span>
+              <span class="text-sm font-medium text-green-500" id="planned-cours">144</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Line Chart - MODIFIÉ avec couleurs professeurs -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Évolution des professeurs</h3>
+            <div class="flex space-x-2">
+              <button class="px-3 py-1 text-xs professor-badge rounded-lg">Mensuel</button>
+              <button class="px-3 py-1 text-xs bg-gray-50 text-gray-600 rounded-lg">Annuel</button>
+            </div>
+          </div>
+          <div class="chart-container h-64 mt-4">
+            <canvas id="professor-evolution-chart" aria-label="Évolution des professeurs"></canvas>
+          </div>
+        </div>
+        
+        <!-- Bar Chart - MODIFIÉ avec couleurs professeurs -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Répartition par spécialité</h3>
+            <button class="px-3 py-1 text-xs professor-badge rounded-lg flex items-center">
+              <i class="ri-download-line mr-1"></i> Exporter
+            </button>
+          </div>
+          <div class="chart-container h-64 mt-4">
+            <canvas id="specialty-distribution-chart" aria-label="Répartition par spécialité"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity - MODIFIÉ avec couleurs professeurs -->
+      <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Activité récente - Professeurs</h3>
+        <div class="space-y-4">
+          <div class="flex items-start">
+            <div class="p-2 professor-icon rounded-lg mr-3">
+              <i class="ri-user-add-line"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium">Nouveau professeur ajouté</p>
+              <p class="text-xs text-gray-500">Il y a 2 heures</p>
+            </div>
+          </div>
+          <div class="flex items-start">
+            <div class="p-2 professor-icon rounded-lg mr-3">
+              <i class="ri-calendar-schedule-line"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium">Emploi du temps mis à jour</p>
+              <p class="text-xs text-gray-500">Aujourd'hui, 09:45</p>
+            </div>
+          </div>
+          <div class="flex items-start">
+            <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg mr-3">
+              <i class="ri-alarm-warning-line"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium">Professeur indisponible</p>
+              <p class="text-xs text-gray-500">Hier, 15:30</p>
+            </div>
+          </div>
+          <div class="flex items-start">
+            <div class="p-2 professor-icon rounded-lg mr-3">
+              <i class="ri-medal-line"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium">Promotion de grade</p>
+              <p class="text-xs text-gray-500">Hier, 11:20</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="notifications" class="fixed top-4 right-4 space-y-2"></div>
+
+  <script type="module" src="../../../public/assets/javascript/rp/dashboard.js"></script>
+
+  <script>
+    // Script pour les graphiques des professeurs
+    document.addEventListener('DOMContentLoaded', function() {
+      // Chart.js initialization for professor data
+      const professorEvolutionCtx = document.getElementById('professor-evolution-chart');
+      const specialtyDistributionCtx = document.getElementById('specialty-distribution-chart');
+      
+      // Professor evolution chart
+      new Chart(professorEvolutionCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+          datasets: [{
+            label: 'Nombre de professeurs',
+            data: [35, 38, 40, 42, 41, 42],
+            borderColor: '#7e22ce',
+            backgroundColor: 'rgba(126, 34, 206, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      // Specialty distribution chart
+      new Chart(specialtyDistributionCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Informatique', 'Maths', 'Physique', 'Chimie', 'Biologie'],
+          datasets: [{
+            label: 'Nombre',
+            data: [15, 12, 8, 5, 2],
+            backgroundColor: [
+              '#7e22ce',
+              '#a855f7',
+              '#c084fc',
+              '#d8b4fe',
+              '#ede9fe'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

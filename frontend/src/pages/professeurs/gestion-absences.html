@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Professeur | École 221</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="navbar max-w-7xl mx-auto px-4">
+            <div class="flex-1">
+                <a class="btn btn-ghost text-xl font-bold text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    École 221
+                </a>
+            </div>
+            <div class="flex-none gap-4">
+                <div class="dropdown dropdown-end">
+                    <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                        <div class="w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                            <span id="user-initials">P</span>
+                        </div>
+                    </label>
+                    <ul tabindex="0" class="mt-3 p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                        <li><a>Profil</a></li>
+                        <li><a id="logout-btn">Déconnexion</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex max-w-7xl mx-auto px-4 py-6">
+        <!-- Sidebar -->
+        <aside class="w-64 pr-6 hidden md:block">
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="avatar">
+                        <div class="w-12 rounded-full bg-primary text-white flex items-center justify-center">
+                            <span id="prof-initials">P</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="font-bold" id="prof-name">Professeur</h2>
+                        <p class="text-sm text-gray-500">Enseignant</p>
+                    </div>
+                </div>
+                <ul class="menu space-y-1">
+                    <li><a class="active" id="courses-tab"><i class="fas fa-calendar-alt mr-2"></i> Mes Cours</a></li>
+                    <li><a id="absences-tab"><i class="fas fa-user-times mr-2"></i> Absences</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1">
+            <!-- Mobile Tabs -->
+            <div class="tabs tabs-boxed bg-white mb-6 md:hidden">
+                <a class="tab tab-active" id="mobile-courses-tab">Mes Cours</a> 
+                <a class="tab" id="mobile-absences-tab">Absences</a>
+            </div>
+
+            <!-- Welcome Card -->
+            <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow p-6 mb-6">
+                <h1 class="text-2xl font-bold mb-2">Bonjour, <span id="welcome-prof-name">Professeur</span></h1>
+                <p class="opacity-90">Gérez vos cours et les absences de vos étudiants</p>
+            </div>
+
+            <!-- Cours Section -->
+            <div id="courses-section" class="animate-fade-in">
+                <div class="bg-white rounded-lg shadow mb-6 p-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                        <h2 class="text-xl font-bold mb-2 md:mb-0">Mes Cours Planifiés</h2>
+                        <div class="w-full md:w-auto">
+                            <select id="status-filter" class="select select-bordered w-full">
+                                <option value="all">Tous les statuts</option>
+                                <option value="planifié">Planifié</option>
+                                <option value="effectué">Effectué</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra">
+                            <thead>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Date</th>
+                                    <th>Horaire</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courses-list">
+                                <!-- Rempli dynamiquement -->
+                                <tr>
+                                    <td colspan="4" class="text-center py-8">
+                                        <div class="text-gray-400">Chargement des cours...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Absences Section -->
+            <div id="absences-section" class="hidden animate-fade-in">
+                <div class="bg-white rounded-lg shadow p-4 mb-6">
+                    <h2 class="text-xl font-bold mb-4">Marquer les Absences</h2>
+                    
+                    <div class="mb-6">
+                        <label class="label">
+                            <span class="label-text font-medium">Sélectionner un cours</span>
+                        </label>
+                        <select id="course-select" class="select select-bordered w-full">
+                            <option disabled selected>Choisissez un cours</option>
+                        </select>
+                    </div>
+
+                    <div id="absence-form" class="hidden">
+                        <h3 class="text-lg font-semibold mb-4" id="selected-course-title"></h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Étudiant</th>
+                                        <th>Présence</th>
+                                        <th>Justifié</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-list">
+                                    <!-- Rempli dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6 flex justify-end">
+                            <button id="save-absences-btn" class="btn btn-primary">
+                                <i class="fas fa-save mr-2"></i> Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Détails Cours -->
+    <dialog id="course-details-modal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            </form>
+            <h3 class="font-bold text-xl text-primary" id="modal-course-title"></h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div class="bg-base-100 p-4 rounded-lg">
+                    <h4 class="font-medium text-gray-500 mb-2">Informations</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm text-gray-400">Date</p>
+                            <p id="modal-course-date" class="font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Horaire</p>
+                            <p id="modal-course-time" class="font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Salle</p>
+                            <p id="modal-course-room" class="font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-base-100 p-4 rounded-lg">
+                    <h4 class="font-medium text-gray-500 mb-2">Statut</h4>
+                    <p id="modal-course-status" class="text-lg font-bold"></p>
+                    
+                    <h4 class="font-medium text-gray-500 mt-4 mb-2">Classes</h4>
+                    <p id="modal-course-classes" class="font-medium"></p>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-base-100 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-500 mb-2">Description</h4>
+                <p id="modal-course-description" class="font-medium"></p>
+            </div>
+            
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Fermer</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast toast-top toast-end"></div>
+
+    <!-- Font Awesome pour les icônes -->
+    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
+    
+    <!-- Script principal -->
+  <script type="module" src="../../../public/assets/javascript/professeur/professeur.js"></script>
+</body>
+</html>

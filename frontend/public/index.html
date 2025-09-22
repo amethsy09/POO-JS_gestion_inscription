@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.min.css" rel="stylesheet" />
+  <title>Connexion</title>
+</head>
+
+<body class="h-screen flex bg-white">
+  <div class="w-1/2 hidden lg:block">
+    <img src="./assets/images/illustration-du-concept-connexion_114360-739.avif" alt="" class="h-full object-cover" />
+  </div>
+  <div
+    class="flex-1 relative flex flex-col justify-center items-center gap-5 inset-0 bg-gradient-to-r from-indigo-50/50 to-white">
+    <div class="flex justify-between">
+      <div class="flex text-gray-800 font-medium text-lg animate-bounce items-center absolute top-5 left-28 gap-1">
+        <i class="ri-book-open-fill"></i>
+        <span>Ecole 221</span>
+      </div>
+    </div>
+    <div class="relative">
+      <i class="ri-bookmark-fill text-purple-500 text-xl absolute -top-3 -right-2"></i>
+      <p class="text-gray-600 w-full md:w-96 text-center font-medium">
+        Bienvenue, heureux de voir sur la plateforme de gestion des inscriptions .<br> Pour acceder à votre compte,
+        veuillez vous connecter.
+      </p>
+    </div>
+    <form id="loginForm" class="w-full md:w-[500px] mx-auto p-3 mt-4">
+      <div class="mb-4">
+        <label class="block text-gray-500 font-semibold mb-2">Email </label>
+        <div class="relative">
+          <input type="email" id="email" placeholder="Votre adresse email"
+            class="w-full px-4 py-3 border rounded shadow-sm border-gray-200 focus:outline-none focus:border-blue-500" />
+          <i class="ri-mail-ai-line absolute right-2 top-2"></i>
+        </div>
+        <p id="errorEmail"></p>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-500 font-semibold mb-2">Mot de passe</label>
+        <div class="relative">
+          <input type="password" id="password" placeholder="Votre mot de passe"
+            class="w-full px-4 py-3 border shadow-sm rounded border-gray-200 focus:outline-none focus:border-blue-500" />
+          <i class="ri-lock-password-line absolute right-2 top-2"></i>
+        </div>
+        <p id="errorPassword"></p>
+      </div>
+      <button type="submit" class="w-full bg-purple-500 text-white py-4 rounded hover:bg-purple-600 font-semibold">
+        Se connecter
+      </button>
+    </form>
+    <div id="notifications" class="fixed top-4 right-4 space-y-2"></div>
+  </div>
+  <script type="module" src="../src/auth/login.js"></script>
+</body>
+
+</html>

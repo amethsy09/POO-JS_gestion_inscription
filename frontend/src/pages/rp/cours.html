@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning des Cours - Responsable Pédagogique</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        .sidebar {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .input-error {
+            border-color: #ef4444;
+            border-width: 2px;
+        }
+        .badge-success {
+            background-color: #10b981;
+            color: white;
+        }
+        .badge-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .badge-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .main-content {
+            margin-left: 14rem;
+        }
+        .active-link {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
+        .sidebar-logo {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .fc-event {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .fc-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .course-color-1 { background-color: #3b82f6; border-color: #3b82f6; }
+        .course-color-2 { background-color: #10b981; border-color: #10b981; }
+        .course-color-3 { background-color: #f59e0b; border-color: #f59e0b; }
+        .course-color-4 { background-color: #8b5cf6; border-color: #8b5cf6; }
+        .course-color-5 { background-color: #ec4899; border-color: #ec4899; }
+        #logout-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Notification container -->
+    <div id="notification-container" class="notification-container"></div>
+    
+    <!-- Sidebar Container -->
+    <div id="sidebar-container"></div>
+  
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-4 text-lg font-medium">Chargement du planning...</p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-800">Planning des Cours</h1>
+                        <p class="text-gray-600">Responsable Pédagogique</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="btn btn-ghost btn-circle">
+                            <i class="ri-notification-3-line text-xl"></i>
+                        </button>
+                        <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">1</span>
+                    </div>
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" class="avatar cursor-pointer">
+                            <div class="w-12 rounded-full bg-gray-200 border-2 border-dashed" />
+                        </div>
+                        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 mt-2">
+                            <li><a><i class="ri-user-line"></i> Mon profil</a></li>
+                            <li><a><i class="ri-settings-3-line"></i> Paramètres</a></li>
+                            <!-- Bouton de déconnexion avec ID -->
+                            <li><a class="text-red-500" id="logout-btn"><i class="ri-logout-circle-r-line"></i> Déconnexion</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Main Dashboard -->
+            <div class="space-y-6">
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Actions rapides</h2>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="add-course-btn" class="btn btn-primary">
+                            <i class="ri-add-line mr-2"></i> Planifier un cours
+                        </button>
+                        <button id="current-week-btn" class="btn btn-outline">
+                            <i class="ri-calendar-event-line mr-2"></i> Semaine actuelle
+                        </button>
+                        <button id="refresh-btn" class="btn btn-outline">
+                            <i class="ri-refresh-line mr-2"></i> Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Filtres</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Classe</span>
+                            </label>
+                            <select class="select select-bordered" id="class-filter">
+                                <option value="all">Toutes les classes</option>
+                                <option>L1 Informatique</option>
+                                <option>L2 Mathématiques</option>
+                                <option>L3 Physique</option>
+                                <option>M1 Génie Logiciel</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Professeur</span>
+                            </label>
+                            <select class="select select-bordered" id="professor-filter">
+                                <option value="all">Tous les professeurs</option>
+                                <option>Dr. Sophie Martin</option>
+                                <option>Prof. Alioune Diop</option>
+                                <option>Dr. Fatou Ndiaye</option>
+                                <option>Prof. Jean Dupont</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Salle</span>
+                            </label>
+                            <select class="select select-bordered" id="room-filter">
+                                <option value="all">Toutes les salles</option>
+                                <option>Salle A101</option>
+                                <option>Salle B203</option>
+                                <option>Amphi Principal</option>
+                                <option>Labo Informatique</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Module</span>
+                            </label>
+                            <select class="select select-bordered" id="module-filter">
+                                <option value="all">Tous les modules</option>
+                                <option>Algorithmique</option>
+                                <option>Base de données</option>
+                                <option>Mathématiques avancées</option>
+                                <option>Physique quantique</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Section -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div id="calendar" class="h-screen"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add/Edit Course Modal -->
+    <dialog id="course-modal" class="modal">
+        <div class="modal-box max-w-2xl">
+            <h3 class="font-bold text-xl mb-6" id="modal-title">Planifier un nouveau cours</h3>
+            <form id="course-form">
+                <input type="hidden" id="course-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Module -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Module</span>
+                        </label>
+                        <select class="select select-bordered" id="course-module">
+                            <option value="" disabled selected>Sélectionner un module</option>
+                            <option>Algorithmique</option>
+                            <option>Base de données</option>
+                            <option>Mathématiques avancées</option>
+                            <option>Physique quantique</option>
+                            <option>Programmation Web</option>
+                            <option>Réseaux informatiques</option>
+                        </select>
+                        <div class="error-message" id="error-course-module">Veuillez sélectionner un module</div>
+                    </div>
+                    
+                    <!-- Classe -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Classe</span>
+                        </label>
+                        <select class="select select-bordered" id="course-class">
+                            <option value="" disabled selected>Sélectionner une classe</option>
+                            <option>L1 Informatique</option>
+                            <option>L2 Informatique</option>
+                            <option>L3 Informatique</option>
+                            <option>L1 Mathématiques</option>
+                            <option>L2 Mathématiques</option>
+                            <option>M1 Génie Logiciel</option>
+                        </select>
+                        <div class="error-message" id="error-course-class">Veuillez sélectionner une classe</div>
+                    </div>
+                    
+                    <!-- Professeur -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Professeur</span>
+                        </label>
+                        <select class="select select-bordered" id="course-professor">
+                            <option value="" disabled selected>Sélectionner un professeur</option>
+                            <option>Dr. Sophie Martin</option>
+                            <option>Prof. Alioune Diop</option>
+                            <option>Dr. Fatou Ndiaye</option>
+                            <option>Prof. Jean Dupont</option>
+                            <option>Dr. Mamadou Kane</option>
+                        </select>
+                        <div class="error-message" id="error-course-professor">Veuillez sélectionner un professeur</div>
+                    </div>
+                    
+                    <!-- Salle -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Salle</span>
+                        </label>
+                        <select class="select select-bordered" id="course-room">
+                            <option value="" disabled selected>Sélectionner une salle</option>
+                            <option>Salle A101</option>
+                            <option>Salle A102</option>
+                            <option>Salle B203</option>
+                            <option>Salle B204</option>
+                            <option>Amphi Principal</option>
+                            <option>Labo Informatique 1</option>
+                            <option>Labo Informatique 2</option>
+                        </select>
+                        <div class="error-message" id="error-course-room">Veuillez sélectionner une salle</div>
+                    </div>
+                    
+                    <!-- Date et heure de début -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Date et heure de début</span>
+                        </label>
+                        <input type="datetime-local" class="input input-bordered" id="course-start">
+                        <div class="error-message" id="error-course-start">Veuillez sélectionner une date et heure valide</div>
+                    </div>
+                    
+                    <!-- Date et heure de fin -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Date et heure de fin</span>
+                        </label>
+                        <input type="datetime-local" class="input input-bordered" id="course-end">
+                        <div class="error-message" id="error-course-end">Veuillez sélectionner une date et heure valide</div>
+                    </div>
+                    
+                    <!-- Type de cours -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Type de cours</span>
+                        </label>
+                        <select class="select select-bordered" id="course-type">
+                            <option value="cours">Cours magistral</option>
+                            <option value="td">Travaux dirigés</option>
+                            <option value="tp">Travaux pratiques</option>
+                            <option value="exam">Examen</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Couleur -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Couleur d'affichage</span>
+                        </label>
+                        <div class="flex space-x-2">
+                            <div class="tooltip" data-tip="Bleu">
+                                <input type="radio" name="course-color" value="1" class="radio radio-primary" checked />
+                            </div>
+                            <div class="tooltip" data-tip="Vert">
+                                <input type="radio" name="course-color" value="2" class="radio radio-success" />
+                            </div>
+                            <div class="tooltip" data-tip="Orange">
+                                <input type="radio" name="course-color" value="3" class="radio radio-warning" />
+                            </div>
+                            <div class="tooltip" data-tip="Violet">
+                                <input type="radio" name="course-color" value="4" class="radio radio-secondary" />
+                            </div>
+                            <div class="tooltip" data-tip="Rose">
+                                <input type="radio" name="course-color" value="5" class="radio radio-accent" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-action mt-6">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <span id="submit-text">Enregistrer</span>
+                        <span id="submit-spinner" class="loading-spinner ml-2 hidden"></span>
+                    </button>
+                    <button type="button" class="btn btn-ghost" id="cancel-course-modal">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+      <script type="module" src="../../../public/assets/javascript/rp/rp.cours.js"></script>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.min.js'></script>
+
+    
+</body>
+</html>

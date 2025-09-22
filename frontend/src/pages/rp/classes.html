@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Classes - Responsable Pédagogique</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #64748b;
+            --accent: #f97316;
+            --light: #f8fafc;
+            --dark: #1e293b;
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
+            width: 280px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 40;
+            transition: all 0.3s ease;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            background: #faf7f4;
+            min-height: 100vh;
+        }
+        
+        .active-link {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-modern {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .input-modern:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-modern {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-primary-modern {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        }
+        
+        .btn-primary-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .search-modern {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 50px;
+            padding: 12px 20px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(79, 70, 229, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .input-error {
+            border-color: #ef4444;
+            border-width: 2px;
+        }
+        
+        .badge-success {
+            background-color: #10b981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-warning {
+            background-color: #f59e0b;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-secondary {
+            background-color: #6b7280;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .notification-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .table-modern {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table-modern th {
+            background-color: #f8fafc;
+            padding: 1rem;
+            font-weight: 600;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+        
+        .table-modern tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table-modern tr:hover td {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Sidebar Container -->
+    <div id="sidebar-container">
+        <div class="sidebar">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="p-6 border-b border-white border-opacity-10">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-white bg-opacity-10 flex items-center justify-center">
+                            <i class="ri-graduation-cap-line text-xl text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Ecole221</h2>
+                            <p class="text-xs text-white text-opacity-70">Responsable Pédagogique</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="flex-1 px-4 py-6">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white text-opacity-80 hover:text-opacity-100 rounded-xl transition-all">
+                                <i class="ri-dashboard-line"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white text-opacity-80 hover:text-opacity-100 rounded-xl transition-all">
+                                <i class="ri-user-line"></i>
+                                <span>Étudiants</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="active-link flex items-center space-x-3 px-4 py-3 text-white rounded-xl">
+                                <i class="ri-group-line"></i>
+                                <span>Classes</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white text-opacity-80 hover:text-opacity-100 rounded-xl transition-all">
+                                <i class="ri-user-3-line"></i>
+                                <span>Professeurs</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white text-opacity-80 hover:text-opacity-100 rounded-xl transition-all">
+                                <i class="ri-book-open-line"></i>
+                                <span>Cours</span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-10 px-4">
+                        <p class="text-xs uppercase text-white text-opacity-50 mb-3 pl-4">Administration</p>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white text-opacity-80 hover:text-opacity-100 rounded-xl transition-all">
+                                    <i class="ri-settings-3-line"></i>
+                                    <span>Paramètres</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- User profile -->
+                <div class="p-4 border-t border-white border-opacity-10">
+                    <div class="flex items-center space-x-3">
+                        <div class="avatar">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                RP
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-white truncate">M. Diop</p>
+                            <p class="text-xs text-white text-opacity-70 truncate">Responsable Pédagogique</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification container -->
+    <div id="notification-container" class="fixed top-6 right-6 z-50 space-y-3"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto" style="width: 50px; height: 50px;"></div>
+            <p class="mt-6 text-xl font-semibold text-gray-700">Chargement des données...</p>
+            <p class="text-gray-500 mt-2">Veuillez patienter</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content min-h-screen">
+        <!-- Top Navigation -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Gestion des Classes</h1>
+                    <p class="text-gray-600 mt-1">Panel d'administration - Responsable Pédagogique</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="btn btn-ghost btn-circle glass-card w-12 h-12">
+                            <i class="ri-notification-3-line text-xl"></i>
+                        </button>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
+                    </div>
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" class="avatar cursor-pointer">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                RP
+                            </div>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content menu p-3 shadow bg-base-100 rounded-box w-52 mt-2 glass-card">
+                            <li><a class="rounded-lg"><i class="ri-user-line"></i> Mon profil</a></li>
+                            <li><a class="rounded-lg"><i class="ri-settings-3-line"></i> Paramètres</a></li>
+                            <li><a class="rounded-lg text-red-500"><i class="ri-logout-circle-r-line"></i> Déconnexion</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-8 py-8">
+            <!-- Statistics Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="stat-card p-6">
+                    <div class="flex items-center">
+                        <div class="rounded-2xl bg-white bg-opacity-20 p-4 mr-4">
+                            <i class="ri-group-line text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-white opacity-80">Total Classes</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="total-classes">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-6">
+                    <div class="flex items-center">
+                        <div class="rounded-2xl bg-white bg-opacity-20 p-4 mr-4">
+                            <i class="ri-user-line text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-white opacity-80">Étudiants inscrits</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="total-students">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-6">
+                    <div class="flex items-center">
+                        <div class="rounded-2xl bg-white bg-opacity-20 p-4 mr-4">
+                            <i class="ri-book-open-line text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-white opacity-80">Filières actives</p>
+                            <h3 class="text-3xl font-bold text-white mt-1" id="total-filieres">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Section -->
+            <div class="glass-card rounded-2xl p-6 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Liste des Classes</h2>
+                        <p class="text-gray-600 mt-1">Gérez l'ensemble des classes de l'établissement</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="relative">
+                            <input type="text" placeholder="Rechercher une classe..." 
+                                   class="search-modern w-64 pl-12 pr-4 py-3" id="search-input">
+                            <i class="ri-search-line absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button class="btn btn-ghost glass-card w-12 h-12" id="filter-btn">
+                            <i class="ri-filter-3-line text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-card rounded-2xl p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Actions rapides</h2>
+                <div class="flex flex-wrap gap-3">
+                    <button id="add-class-btn" class="btn btn-primary-modern btn-modern">
+                        <i class="ri-add-line mr-2"></i> Ajouter une classe
+                    </button>
+                    <button id="refresh-btn" class="btn btn-outline btn-modern">
+                        <i class="ri-refresh-line mr-2"></i> Actualiser
+                    </button>
+                    <button id="toggle-archive-btn" class="btn btn-outline btn-modern">
+                        Voir les archives
+                    </button>
+                </div>
+            </div>
+
+            <!-- Classes Section -->
+            <div class="glass-card rounded-2xl overflow-hidden">
+                <!-- Classes Table -->
+                <div class="overflow-x-auto">
+                    <table class="table-modern">
+                        <thead>
+                            <tr>
+                                <th>Libellé</th>
+                                <th>Filière</th>
+                                <th>Niveau</th>
+                                <th>Année</th>
+                                <th>Capacité</th>
+                                <th>État</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classes-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center py-8">
+                                    <div class="flex justify-center items-center">
+                                        <div class="loading-spinner mr-2"></div>
+                                        <span>Chargement des classes...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button id="add-class-btn-float" class="floating-action btn btn-primary-modern btn-lg rounded-full w-16 h-16 text-2xl">
+        <i class="ri-add-line"></i>
+    </button>
+
+    <!-- Add/Edit Class Modal -->
+    <dialog id="class-modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box max-w-2xl p-0 modal-glass rounded-2xl">
+            <div class="p-6 border-b">
+                <h3 class="text-2xl font-bold text-gray-900" id="modal-title">Ajouter une nouvelle classe</h3>
+                <p class="text-gray-600 mt-1">Remplissez les informations de la classe</p>
+            </div>
+            
+            <form id="class-form" class="p-6">
+                <input type="hidden" id="class-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Libellé -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">Libellé de la classe</span>
+                        </label>
+                        <input type="text" class="input input-bordered input-modern px-4 py-3" placeholder="Ex: L1 Informatique" id="class-name">
+                        <div class="error-message text-red-500 text-sm mt-2 hidden" id="error-class-name">Veuillez entrer un libellé valide</div>
+                    </div>
+
+                    <!-- Filière -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">Filière</span>
+                        </label>
+                        <select class="select select-bordered input-modern px-4 py-3" id="class-filiere">
+                            <option value="" disabled selected>Chargement des filières...</option>
+                        </select>
+                        <div class="error-message text-red-500 text-sm mt-2 hidden" id="error-class-filiere">Veuillez sélectionner une filière</div>
+                    </div>
+
+                    <!-- Niveau -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">Niveau</span>
+                        </label>
+                        <select class="select select-bordered input-modern px-4 py-3" id="class-niveau">
+                            <option value="" disabled selected>Chargement des niveaux...</option>
+                        </select>
+                        <div class="error-message text-red-500 text-sm mt-2 hidden" id="error-class-niveau">Veuillez sélectionner un niveau</div>
+                    </div>
+
+                    <!-- Année scolaire -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">Année scolaire</span>
+                        </label>
+                        <select class="select select-bordered input-modern px-4 py-3" id="class-annee">
+                            <option value="" disabled selected>Chargement des années...</option>
+                        </select>
+                        <div class="error-message text-red-500 text-sm mt-2 hidden" id="error-class-annee">Veuillez sélectionner une année scolaire</div>
+                    </div>
+
+                    <!-- Capacité -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">Capacité maximale</span>
+                        </label>
+                        <input type="number" class="input input-bordered input-modern px-4 py-3" placeholder="Ex: 30" id="class-capacity" min="1">
+                        <div class="error-message text-red-500 text-sm mt-2 hidden" id="error-class-capacity">La capacité doit être un nombre supérieur à 0</div>
+                    </div>
+
+                    <!-- État -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-semibold text-gray-700">État</span>
+                        </label>
+                        <select class="select select-bordered input-modern px-4 py-3" id="class-state">
+                            <option value="disponible">Disponible</option>
+                            <option value="archivé">Archivé</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="modal-action mt-8 pt-6 border-t">
+                    <button type="button" class="btn btn-ghost btn-modern rounded-xl px-8" id="cancel-class-modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary-modern btn-modern rounded-xl px-8" id="submit-btn">
+                        <span id="submit-text">Enregistrer</span>
+                        <span id="submit-spinner" class="loading-spinner ml-2 hidden"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <script type="module" src="../../../public/assets/javascript/rp/rp.classe.js"></script>
+
+</body>
+
+</html>
