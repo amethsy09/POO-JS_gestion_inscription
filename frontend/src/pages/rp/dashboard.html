@@ -59,23 +59,116 @@
       background: linear-gradient(135deg, var(--professor-light) 0%, var(--professor-accent) 100%);
       color: var(--professor-dark);
     }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .mobile-menu-button {
+        display: block !important;
+      }
+      
+      .sidebar-mobile-hidden {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar-mobile-visible {
+        transform: translateX(0);
+      }
+      
+      .main-content-mobile-full {
+        margin-left: 0 !important;
+      }
+      
+      .stat-card {
+        padding: 1rem !important;
+      }
+      
+      .stat-card h3 {
+        font-size: 1.5rem !important;
+      }
+      
+      .chart-container {
+        height: 250px !important;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .grid-cols-mobile {
+        grid-template-columns: 1fr !important;
+      }
+      
+      .p-mobile {
+        padding: 1rem !important;
+      }
+      
+      .welcome-banner h1 {
+        font-size: 1.25rem !important;
+      }
+      
+      .welcome-banner p {
+        font-size: 0.875rem !important;
+      }
+    }
+
+    /* Mobile menu button */
+    .mobile-menu-button {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 60;
+      background: var(--professor-primary);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+
+    /* Sidebar transitions */
+    .sidebar-transition {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    /* Overlay for mobile */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+    }
+
+    .sidebar-overlay-visible {
+      display: block;
+    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-button" id="mobileMenuButton">
+    <i class="ri-menu-line text-xl"></i>
+  </button>
+
+  <!-- Overlay for mobile sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  
   <!-- Container pour le composant sidebar -->
   <div id="sidebar-container"></div>
   
   <!-- Main Content -->
-  <div class="flex-1 overflow-auto lg:ml-56">
-    <div class="p-6">
+  <div class="flex-1 overflow-auto lg:ml-56 main-content-mobile-full" id="mainContent">
+    <div class="p-6 p-mobile">
       <!-- Welcome Banner -->
-      <div class="professor-gradient rounded-xl p-6 mb-6 text-white">
+      <div class="professor-gradient rounded-xl p-6 mb-6 text-white welcome-banner">
         <h1 class="text-2xl font-bold mb-2">Bienvenue sur votre Dashboard</h1>
         <p class="opacity-90">Consultez les statistiques et analyses de votre établissement</p>
       </div>
       
       <!-- Stats Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 grid-cols-mobile">
         <!-- Classes Card -->
         <div class="stat-card bg-white rounded-xl shadow-md p-6 transition-all duration-300 border-l-4 border-blue-500">
           <div class="flex justify-between items-start">
@@ -87,7 +180,7 @@
               <i class="ri-building-line text-2xl"></i>
             </div>
           </div>
-          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+          <div class="mt-4 md:mt-6 pt-4 border-t border-gray-100 space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">Total</span>
               <span class="text-sm font-medium text-gray-700" id="total-classes-data">24</span>
@@ -103,7 +196,7 @@
           </div>
         </div>
         
-        <!-- Professeurs Card - MODIFIÉ avec couleurs harmonisées -->
+        <!-- Professeurs Card -->
         <div class="stat-card professor-card bg-white rounded-xl shadow-md p-6 transition-all duration-300 border-l-4 border-purple-600">
           <div class="flex justify-between items-start">
             <div>
@@ -114,7 +207,7 @@
               <i class="ri-user-star-line text-2xl"></i>
             </div>
           </div>
-          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+          <div class="mt-4 md:mt-6 pt-4 border-t border-gray-100 space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">Total</span>
               <span class="text-sm font-medium text-gray-700" id="total-professeurs-data">42</span>
@@ -141,7 +234,7 @@
               <i class="ri-book-open-line text-2xl"></i>
             </div>
           </div>
-          <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+          <div class="mt-4 md:mt-6 pt-4 border-t border-gray-100 space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-500">Total</span>
               <span class="text-sm font-medium text-gray-700" id="total-cours-data">156</span>
@@ -159,10 +252,10 @@
       </div>
       
       <!-- Charts Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Line Chart - MODIFIÉ avec couleurs professeurs -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-          <div class="flex justify-between items-center mb-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <!-- Line Chart -->
+        <div class="bg-white rounded-xl shadow-md p-4 md:p-6">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
             <h3 class="text-lg font-semibold text-gray-800">Évolution des professeurs</h3>
             <div class="flex space-x-2">
               <button class="px-3 py-1 text-xs professor-badge rounded-lg">Mensuel</button>
@@ -174,11 +267,11 @@
           </div>
         </div>
         
-        <!-- Bar Chart - MODIFIÉ avec couleurs professeurs -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-          <div class="flex justify-between items-center mb-4">
+        <!-- Bar Chart -->
+        <div class="bg-white rounded-xl shadow-md p-4 md:p-6">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
             <h3 class="text-lg font-semibold text-gray-800">Répartition par spécialité</h3>
-            <button class="px-3 py-1 text-xs professor-badge rounded-lg flex items-center">
+            <button class="px-3 py-1 text-xs professor-badge rounded-lg flex items-center justify-center w-fit">
               <i class="ri-download-line mr-1"></i> Exporter
             </button>
           </div>
@@ -188,43 +281,43 @@
         </div>
       </div>
       
-      <!-- Recent Activity - MODIFIÉ avec couleurs professeurs -->
-      <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+      <!-- Recent Activity -->
+      <div class="mt-6 bg-white rounded-xl shadow-md p-4 md:p-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Activité récente - Professeurs</h3>
         <div class="space-y-4">
           <div class="flex items-start">
-            <div class="p-2 professor-icon rounded-lg mr-3">
+            <div class="p-2 professor-icon rounded-lg mr-3 flex-shrink-0">
               <i class="ri-user-add-line"></i>
             </div>
-            <div>
-              <p class="text-sm font-medium">Nouveau professeur ajouté</p>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Nouveau professeur ajouté</p>
               <p class="text-xs text-gray-500">Il y a 2 heures</p>
             </div>
           </div>
           <div class="flex items-start">
-            <div class="p-2 professor-icon rounded-lg mr-3">
+            <div class="p-2 professor-icon rounded-lg mr-3 flex-shrink-0">
               <i class="ri-calendar-schedule-line"></i>
             </div>
-            <div>
-              <p class="text-sm font-medium">Emploi du temps mis à jour</p>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Emploi du temps mis à jour</p>
               <p class="text-xs text-gray-500">Aujourd'hui, 09:45</p>
             </div>
           </div>
           <div class="flex items-start">
-            <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg mr-3">
+            <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg mr-3 flex-shrink-0">
               <i class="ri-alarm-warning-line"></i>
             </div>
-            <div>
-              <p class="text-sm font-medium">Professeur indisponible</p>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Professeur indisponible</p>
               <p class="text-xs text-gray-500">Hier, 15:30</p>
             </div>
           </div>
           <div class="flex items-start">
-            <div class="p-2 professor-icon rounded-lg mr-3">
+            <div class="p-2 professor-icon rounded-lg mr-3 flex-shrink-0">
               <i class="ri-medal-line"></i>
             </div>
-            <div>
-              <p class="text-sm font-medium">Promotion de grade</p>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">Promotion de grade</p>
               <p class="text-xs text-gray-500">Hier, 11:20</p>
             </div>
           </div>
@@ -238,16 +331,70 @@
   <script type="module" src="../../components/sidebar/sidebar.js"></script>
 
   <script>
+    // Gestion du menu mobile
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuButton = document.getElementById('mobileMenuButton');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      const mainContent = document.getElementById('mainContent');
+      
+      function toggleSidebar() {
+        const sidebar = document.querySelector('aside');
+        if (sidebar) {
+          sidebar.classList.toggle('sidebar-mobile-hidden');
+          sidebar.classList.toggle('sidebar-mobile-visible');
+          sidebarOverlay.classList.toggle('sidebar-overlay-visible');
+          document.body.classList.toggle('overflow-hidden');
+        }
+      }
+      
+      if (mobileMenuButton) {
+        mobileMenuButton.addEventListener('click', toggleSidebar);
+      }
+      
+      if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+      }
+      
+      // Fermer le sidebar quand on clique sur un lien (mobile)
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          if (e.target.closest('.sidebar-link')) {
+            toggleSidebar();
+          }
+        }
+      });
+      
+      // Réinitialiser le sidebar sur desktop
+      function handleResize() {
+        const sidebar = document.querySelector('aside');
+        if (sidebar) {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove('sidebar-mobile-hidden', 'sidebar-mobile-visible');
+            sidebarOverlay.classList.remove('sidebar-overlay-visible');
+            document.body.classList.remove('overflow-hidden');
+          } else {
+            sidebar.classList.add('sidebar-mobile-hidden');
+          }
+        }
+      }
+      
+      window.addEventListener('resize', handleResize);
+      handleResize(); // Initial call
+    });
+
     // initialiser le sidebar pour le dashboard des RP
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = new SidebarComponent('sidebar-container', 'dashboard');
       sidebar.render();
     });
+
     // Script pour les graphiques des professeurs
     document.addEventListener('DOMContentLoaded', function() {
       // Chart.js initialization for professor data
       const professorEvolutionCtx = document.getElementById('professor-evolution-chart');
       const specialtyDistributionCtx = document.getElementById('specialty-distribution-chart');
+      
+      if (!professorEvolutionCtx || !specialtyDistributionCtx) return;
       
       // Professor evolution chart
       new Chart(professorEvolutionCtx, {

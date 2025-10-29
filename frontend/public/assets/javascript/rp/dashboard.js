@@ -160,7 +160,7 @@ class DashboardManager {
         utilisateurs
       };
       
-      console.log('Données chargées depuis db.json:', this.jsonData);
+      // console.log('Données chargées depuis db.json:', this.jsonData);
       
     } catch (error) {
       console.error('Erreur lors du chargement depuis db.json:', error);
@@ -237,7 +237,7 @@ class DashboardManager {
     const barCanvas = document.getElementById('chart-bar-1');
     
     if (!lineCanvas || !barCanvas) {
-      console.error('Canvas elements not found!');
+      // console.error('Canvas elements not found!');
       return;
     }
     

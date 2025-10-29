@@ -1,7 +1,4 @@
-import { router } from "../../../../src/router/router.js";
 import { SidebarComponent } from "../../../../src/components/sidebar/sidebar.js";
-// Classe Sidebar
-
 
 // Classe principale pour la gestion des classes avec Fetch API
 class ClassManager {
@@ -12,7 +9,8 @@ class ClassManager {
         this.filieres = [];
         this.niveaux = [];
         this.annees = [];
-        this.showArchived = false; // Nouvelle variable pour gérer l'affichage des archives
+        this.students = []; // Ajout pour stocker les étudiants
+        this.showArchived = false; 
         this.init();    
     }
     
@@ -23,15 +21,17 @@ class ClassManager {
                 this.loadClasses(),
                 this.loadFilieres(),
                 this.loadNiveaux(),
-                this.loadAnnees()
+                this.loadAnnees(),
+                this.loadStudents() // Charger les étudiants pour les statistiques
             ]);
             
             // Peupler les sélecteurs
             this.populateSelectors();
             
             this.renderClasses();
+            this.updateStatistics(); // Mettre à jour les statistiques
             this.setupEventListeners();
-            this.setupArchiveToggle(); // Configurer le toggle d'archives
+            this.setupArchiveToggle();
         } catch (error) {
             console.error('Erreur lors du chargement des données:', error);
             this.showNotification('Erreur lors du chargement des données', 'error');
@@ -87,6 +87,64 @@ class ClassManager {
             console.error('Erreur de chargement des années scolaires:', error);
             throw error;
         }
+    }
+    
+    // Charger les étudiants depuis l'API
+    async loadStudents() {
+        try {
+            const response = await fetch(`${this.API_BASE}/etudiants`);
+            if (!response.ok) throw new Error('Erreur réseau');
+            this.students = await response.json();
+        } catch (error) {
+            console.error('Erreur de chargement des étudiants:', error);
+            // Ne pas throw pour ne pas bloquer l'initialisation
+        }
+    }
+    
+    // Méthode pour calculer et mettre à jour les statistiques
+    updateStatistics() {
+        // Calculer le nombre total de classes (non archivées)
+        const totalClasses = this.classes.filter(cls => cls.state !== 'archivé').length;
+        
+        // Calculer le nombre total d'étudiants
+        const totalStudents = this.students.length;
+        
+        // Calculer le nombre de filières actives (qui ont au moins une classe non archivée)
+        const activeFilieres = new Set();
+        this.classes.forEach(cls => {
+            if (cls.state !== 'archivé' && cls.id_filiere) {
+                activeFilieres.add(cls.id_filiere);
+            }
+        });
+        const totalFilieres = activeFilieres.size;
+        
+        // Mettre à jour l'interface avec animation
+        this.animateCounter('total-classes', totalClasses);
+        this.animateCounter('total-students', totalStudents);
+        this.animateCounter('total-filieres', totalFilieres);
+    }
+    
+    // Méthode pour animer les compteurs
+    animateCounter(elementId, targetValue) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const currentValue = parseInt(element.textContent) || 0;
+        const duration = 1000; // 1 seconde
+        const steps = 60; // 60 frames
+        const stepValue = (targetValue - currentValue) / steps;
+        let currentStep = 0;
+        
+        const timer = setInterval(() => {
+            currentStep++;
+            const displayValue = Math.floor(currentValue + (stepValue * currentStep));
+            element.textContent = displayValue;
+            
+            if (currentStep >= steps) {
+                element.textContent = targetValue;
+                clearInterval(timer);
+            }
+        }, duration / steps);
     }
     
     // Remplir les sélecteurs dans le modal
@@ -152,69 +210,71 @@ class ClassManager {
                     </td>
                 </tr>
             `;
-            return;
+        } else {
+            tableBody.innerHTML = '';
+            
+            classesToRender.forEach(cls => {
+                const row = document.createElement('tr');
+                row.classList.add('fade-in');
+                
+                let stateClass = '';
+                let stateText = cls.state || 'disponible';
+                
+                if (stateText === 'disponible') {
+                    stateClass = 'badge-success';
+                } else if (stateText === 'archivé') {
+                    stateClass = 'badge-secondary';
+                } else {
+                    stateClass = 'badge-warning';
+                }
+                
+                row.innerHTML = `
+                    <td>${cls.libelle || 'Non spécifié'}</td>
+                    <td>${this.getFiliereName(cls.id_filiere) || 'Non spécifié'}</td>
+                    <td>${this.getNiveauName(cls.id_niveau) || 'Non spécifié'}</td>
+                    <td>${this.getAnneeName(cls.id_annee) || 'Non spécifié'}</td>
+                    <td>${cls.capacite_max || 'Non spécifié'} étudiants</td>
+                    <td><span class="badge ${stateClass}">${stateText}</span></td>
+                    <td>
+                        <div class="dropdown dropdown-end">
+                            <button class="btn btn-ghost btn-sm dropdown-toggle">
+                                <i class="ri-more-2-line"></i>
+                            </button>
+                            <ul class="dropdown-menu shadow bg-base-100 rounded-box w-52">
+                                ${!this.showArchived ? `
+                                    <li><a href="#" class="modify-class" data-id="${cls.id}"><i class="ri-edit-line"></i> Modifier</a></li>
+                                    <li><a href="#" class="view-details" data-id="${cls.id}"><i class="ri-eye-line"></i> Voir détails</a></li>
+                                    <li>
+                                        <a href="#" class="archive-class" data-id="${cls.id}">
+                                            <i class="ri-archive-line"></i> 
+                                            Archiver
+                                        </a>
+                                    </li>
+                                ` : `
+                                    <li><a href="#" class="view-details" data-id="${cls.id}"><i class="ri-eye-line"></i> Voir détails</a></li>
+                                    <li>
+                                        <a href="#" class="restore-class" data-id="${cls.id}">
+                                            <i class="ri-inbox-unarchive-line"></i> 
+                                            Restaurer
+                                        </a>
+                                    </li>
+                                `}
+                            </ul>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Lier les événements après le rendu
+            setTimeout(() => {
+                this.bindActionEvents();
+            }, 100);
         }
         
-        tableBody.innerHTML = '';
-        
-        classesToRender.forEach(cls => {
-            const row = document.createElement('tr');
-            row.classList.add('fade-in');
-            
-            let stateClass = '';
-            let stateText = cls.state || 'disponible';
-            
-            if (stateText === 'disponible') {
-                stateClass = 'badge-success';
-            } else if (stateText === 'archivé') {
-                stateClass = 'badge-secondary';
-            } else {
-                stateClass = 'badge-warning';
-            }
-            
-            row.innerHTML = `
-                <td>${cls.libelle || 'Non spécifié'}</td>
-                <td>${this.getFiliereName(cls.id_filiere) || 'Non spécifié'}</td>
-                <td>${this.getNiveauName(cls.id_niveau) || 'Non spécifié'}</td>
-                <td>${this.getAnneeName(cls.id_annee) || 'Non spécifié'}</td>
-                <td>${cls.capacite_max || 'Non spécifié'} étudiants</td>
-                <td><span class="badge ${stateClass}">${stateText}</span></td>
-                <td>
-                    <div class="dropdown dropdown-end">
-                        <button class="btn btn-ghost btn-sm dropdown-toggle">
-                            <i class="ri-more-2-line"></i>
-                        </button>
-                        <ul class="dropdown-menu shadow bg-base-100 rounded-box w-52">
-                            ${!this.showArchived ? `
-                                <li><a href="#" class="modify-class" data-id="${cls.id}"><i class="ri-edit-line"></i> Modifier</a></li>
-                                <li><a href="#" class="view-details" data-id="${cls.id}"><i class="ri-eye-line"></i> Voir détails</a></li>
-                                <li>
-                                    <a href="#" class="archive-class" data-id="${cls.id}">
-                                        <i class="ri-archive-line"></i> 
-                                        Archiver
-                                    </a>
-                                </li>
-                            ` : `
-                                <li><a href="#" class="view-details" data-id="${cls.id}"><i class="ri-eye-line"></i> Voir détails</a></li>
-                                <li>
-                                    <a href="#" class="restore-class" data-id="${cls.id}">
-                                        <i class="ri-inbox-unarchive-line"></i> 
-                                        Restaurer
-                                    </a>
-                                </li>
-                            `}
-                        </ul>
-                    </div>
-                </td>
-            `;
-            
-            tableBody.appendChild(row);
-        });
-        
-        // Lier les événements après le rendu
-        setTimeout(() => {
-            this.bindActionEvents();
-        }, 100);
+        // Mettre à jour les statistiques après le rendu
+        this.updateStatistics();
     }
     
     // Configurer le toggle d'affichage des archives
@@ -402,13 +462,29 @@ class ClassManager {
             this.clearErrors();
             document.getElementById('class-modal').showModal();
         });
+
+        // Bouton flottant d'ajout de classe
+        document.getElementById('add-class-btn-float')?.addEventListener('click', () => {
+            document.getElementById('modal-title').textContent = 'Ajouter une nouvelle classe';
+            document.getElementById('class-form').reset();
+            document.getElementById('class-id').value = '';
+            this.clearErrors();
+            document.getElementById('class-modal').showModal();
+        });
         
         // Actualiser les données
         document.getElementById('refresh-btn').addEventListener('click', async () => {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
-                await this.loadClasses();
+                await Promise.all([
+                    this.loadClasses(),
+                    this.loadStudents(), // Recharger aussi les étudiants
+                    this.loadFilieres(),
+                    this.loadNiveaux(),
+                    this.loadAnnees()
+                ]);
                 this.renderClasses();
+                this.updateStatistics(); // Forcer la mise à jour des stats
                 this.showNotification('Données actualisées avec succès');
             } catch (error) {
                 console.error('Erreur lors de l\'actualisation:', error);
@@ -489,6 +565,7 @@ class ClassManager {
             const newClass = await response.json();
             this.classes.push(newClass);
             this.renderClasses();
+            this.updateStatistics(); // Mettre à jour les stats
             this.showNotification(`Classe "${classData.libelle}" ajoutée avec succès!`);
             document.getElementById('class-modal').close();
         } catch (error) {
@@ -519,6 +596,7 @@ class ClassManager {
             }
             
             this.renderClasses();
+            this.updateStatistics(); // Mettre à jour les stats
             this.showNotification(`Classe mise à jour avec succès!`);
             document.getElementById('class-modal').close();
         } catch (error) {
@@ -554,6 +632,7 @@ class ClassManager {
             }
             
             this.renderClasses();
+            this.updateStatistics(); // Mettre à jour les stats
             this.showNotification(`Classe archivée avec succès!`);
         } catch (error) {
             console.error('Erreur:', error);
@@ -588,6 +667,7 @@ class ClassManager {
             }
             
             this.renderClasses();
+            this.updateStatistics(); // Mettre à jour les stats
             this.showNotification(`Classe restaurée avec succès!`);
         } catch (error) {
             console.error('Erreur:', error);

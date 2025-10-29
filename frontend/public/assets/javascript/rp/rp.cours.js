@@ -1,7 +1,4 @@
 import {SidebarComponent} from "../../../../src/components/sidebar/sidebar.js";
-
-// Classe SidebarComponent
-
 // Gestion des cours
 class CourseManager {
   constructor() {
@@ -845,7 +842,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname.includes('cours') ? 'cours' : 
                        window.location.pathname.includes('classes') ? 'classes' : 
                        window.location.pathname.includes('professeurs') ? 'professeurs' : 'dashboard';
-    
     const sidebar = new SidebarComponent("sidebar-container", currentPage);
     sidebar.render();
 
